@@ -35,7 +35,7 @@ export interface CustomerOrder {
   id: string;
   createdAt: string;
   customerName: string;
-  email: string;
+  email?: string;
   phone: string;
   address: string;
   city: string; // e.g. Dhaka, Chittagong, Sylhet, etc.
@@ -43,8 +43,11 @@ export interface CustomerOrder {
   subtotal: number;
   shipping: number;
   total: number;
-  status: 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered';
+  status: 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
   paymentMethod: 'Cash on Delivery (COD)' | 'bKash / Nagad' | 'Debit/Credit Card';
+  courier?: string;
+  trackingCode?: string;
+  notes?: string;
 }
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest';

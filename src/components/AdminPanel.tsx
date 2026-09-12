@@ -16,8 +16,11 @@ import {
   Image as ImageIcon,
   Search,
   RefreshCw,
+  Layers,
 } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
+import { OrdersManager } from './admin/OrdersManager';
+import { CategoriesManager } from './admin/CategoriesManager';
 
 export const AdminPanel: React.FC = () => {
   const {
@@ -33,7 +36,7 @@ export const AdminPanel: React.FC = () => {
     resetToSampleProducts,
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'metrics'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'categories' | 'metrics'>('upload');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Form State for Adding / Uploading Product
@@ -229,6 +232,18 @@ export const AdminPanel: React.FC = () => {
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Orders ({orders.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
+                activeTab === 'categories'
+                  ? 'bg-amber-400 text-neutral-950 shadow'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Categories ({categories.length})</span>
             </button>
 
             <button
@@ -665,86 +680,13 @@ export const AdminPanel: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 3: CUSTOMER ORDERS TABLE */}
-        {activeTab === 'orders' && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-brand text-2xl font-bold tracking-tight text-neutral-100">
-                Customer Orders ({orders.length})
-              </h2>
-              <p className="text-xs text-neutral-400">
-                Track Bangladesh nationwide orders, customer phone numbers, and fulfillment status.
-              </p>
-            </div>
+        {/* TAB 3: MASTER CUSTOMER ORDERS MANAGEMENT */}
+        {activeTab === 'orders' && <OrdersManager />}
 
-            {orders.length === 0 ? (
-              <div className="p-12 text-center bg-neutral-900 border border-neutral-800 rounded-2xl">
-                <ShoppingBag className="w-10 h-10 text-neutral-600 mx-auto mb-3" />
-                <h3 className="font-brand text-lg font-semibold text-neutral-300">No Orders Yet</h3>
-                <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-                  When clients place dress orders on Dhong, customer delivery addresses and mobile numbers will appear here.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div key={order.id} className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-800 pb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-amber-300 text-sm">{order.id}</span>
-                          <span className="text-neutral-500 text-xs">•</span>
-                          <span className="text-xs text-neutral-400">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="text-xs text-neutral-200 mt-1">
-                          Client: <strong>{order.customerName}</strong> ({order.phone}) — {order.address}, {order.city}
-                        </div>
-                        <div className="text-[11px] text-amber-400/90 mt-0.5">
-                          Method: {order.paymentMethod}
-                        </div>
-                      </div>
+        {/* TAB 4: DYNAMIC CATEGORIES MANAGEMENT */}
+        {activeTab === 'categories' && <CategoriesManager />}
 
-                      <div className="flex items-center gap-3">
-                        <select
-                          value={order.status}
-                          onChange={(e) => updateOrderStatus(order.id, e.target.value as CustomerOrder['status'])}
-                          className="bg-neutral-950 border border-neutral-700 text-xs rounded-lg px-3 py-1 text-neutral-200"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Confirmed">Confirmed</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                        </select>
-                        <span className="font-bold text-sm text-amber-300">{formatBDT(order.total)}</span>
-                      </div>
-                    </div>
-
-                    {/* Order Items */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-neutral-950 border border-neutral-800 text-xs">
-                          <div className="w-10 h-12 rounded bg-neutral-900 overflow-hidden shrink-0">
-                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-neutral-200 line-clamp-1">{item.name}</div>
-                            <div className="text-[11px] text-neutral-400">
-                              Size: <strong>{item.size}</strong> × {item.quantity} ({formatBDT(item.price * item.quantity)})
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 4: STORE METRICS */}
+        {/* TAB 5: STORE METRICS */}
         {activeTab === 'metrics' && (
           <div className="space-y-6">
             <div>

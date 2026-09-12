@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem, CustomerOrder, FilterState, DressSize, SortOption } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '../data/initialProducts';
+import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_ORDERS } from '../data/initialProducts';
 
 interface StoreContextType {
   products: Product[];
   categories: string[];
+  customCategories: string[];
   cart: CartItem[];
   orders: CustomerOrder[];
   filters: FilterState;
@@ -31,6 +32,11 @@ interface StoreContextType {
     paymentMethod: 'Cash on Delivery (COD)' | 'bKash / Nagad' | 'Debit/Credit Card';
   }) => CustomerOrder;
   
+  // Category management & direct selection
+  addCategory: (categoryName: string) => boolean;
+  deleteCategory: (categoryName: string) => void;
+  selectCategoryOnly: (categoryName: string) => void;
+
   // Filter actions with tick marks & multi-selection
   toggleCategoryFilter: (category: string) => void;
   clearCategoriesFilter: () => void;
@@ -51,6 +57,9 @@ interface StoreContextType {
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   updateOrderStatus: (orderId: string, status: CustomerOrder['status']) => void;
+  deleteOrder: (orderId: string) => void;
+  addManualOrder: (order: Omit<CustomerOrder, 'id' | 'createdAt'>) => CustomerOrder;
+  resetOrdersToSample: () => void;
   resetToSampleProducts: () => void;
 }
 
@@ -72,6 +81,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 const PRODUCTS_STORAGE_KEY = 'dhong_bd_products_v2';
 const ORDERS_STORAGE_KEY = 'dhong_bd_orders_v2';
 const CART_STORAGE_KEY = 'dhong_bd_cart_v2';
+const CATEGORIES_STORAGE_KEY = 'dhong_bd_categories_v2';
 const ADMIN_AUTH_KEY = 'dhong_admin_auth';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -89,6 +99,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return INITIAL_PRODUCTS;
   });
 
+  // Custom Categories state (persisted so any added category sticks automatically)
+  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
   // Cart state
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -100,15 +124,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return [];
   });
 
-  // Orders state
+  // Orders state - includes realistic Bangladesh sample orders across all statuses if fresh
   const [orders, setOrders] = useState<CustomerOrder[]>(() => {
     try {
       const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {
       // ignore
     }
-    return [];
+    return INITIAL_ORDERS;
   });
 
   // Filters state
@@ -204,14 +231,49 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
   }, [orders]);
 
-  // Dynamic list of categories from products
+  // Save custom categories when changed
+  useEffect(() => {
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(customCategories));
+  }, [customCategories]);
+
+  // Dynamic list of categories from initial list + custom categories + products
   const categories = React.useMemo(() => {
     const set = new Set<string>(INITIAL_CATEGORIES);
+    customCategories.forEach((c) => {
+      if (c && c.trim()) set.add(c.trim());
+    });
     products.forEach((p) => {
-      if (p.category) set.add(p.category);
+      if (p.category && p.category.trim()) set.add(p.category.trim());
     });
     return Array.from(set);
-  }, [products]);
+  }, [products, customCategories]);
+
+  // Category management & direct selection
+  const addCategory = (categoryName: string): boolean => {
+    const trimmed = categoryName.trim();
+    if (!trimmed) return false;
+    if (!categories.includes(trimmed)) {
+      setCustomCategories((prev) => [...prev, trimmed]);
+    }
+    return true;
+  };
+
+  const deleteCategory = (categoryName: string) => {
+    setCustomCategories((prev) => prev.filter((c) => c !== categoryName));
+    setFilters((prev) => ({
+      ...prev,
+      selectedCategories: prev.selectedCategories.filter((c) => c !== categoryName),
+    }));
+  };
+
+  const selectCategoryOnly = (categoryName: string) => {
+    if (!categoryName || categoryName === 'All' || categoryName === 'All Dresses') {
+      setFilters((prev) => ({ ...prev, selectedCategories: [] }));
+    } else {
+      setFilters((prev) => ({ ...prev, selectedCategories: [categoryName] }));
+    }
+    handleSetCurrentView('store');
+  };
 
   // Dynamic list of tags from products
   const allTags = React.useMemo(() => {
@@ -419,6 +481,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Product management (Upload, Edit, Delete)
   const addProduct = (productData: Omit<Product, 'id' | 'createdAt'>): Product => {
+    if (productData.category && !categories.includes(productData.category.trim())) {
+      addCategory(productData.category.trim());
+    }
     const newProduct: Product = {
       ...productData,
       id: 'dhong-' + Date.now().toString(36),
@@ -430,6 +495,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
+    if (updates.category && !categories.includes(updates.category.trim())) {
+      addCategory(updates.category.trim());
+    }
     setProducts((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
     );
@@ -443,6 +511,25 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, status } : o))
     );
+  };
+
+  const deleteOrder = (orderId: string) => {
+    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+  };
+
+  const addManualOrder = (orderData: Omit<CustomerOrder, 'id' | 'createdAt'>): CustomerOrder => {
+    const newOrder: CustomerOrder = {
+      ...orderData,
+      id: 'DH-BD-' + Math.floor(100000 + Math.random() * 900000),
+      createdAt: new Date().toISOString(),
+    };
+    setOrders((prev) => [newOrder, ...prev]);
+    return newOrder;
+  };
+
+  const resetOrdersToSample = () => {
+    setOrders(INITIAL_ORDERS);
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
   };
 
   const resetToSampleProducts = () => {
@@ -541,6 +628,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         products,
         categories,
+        customCategories,
         cart,
         orders,
         filters,
@@ -557,6 +645,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateCartQuantity,
         clearCart,
         placeOrder,
+        addCategory,
+        deleteCategory,
+        selectCategoryOnly,
         toggleCategoryFilter,
         clearCategoriesFilter,
         toggleSizeFilter,
@@ -574,6 +665,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateProduct,
         deleteProduct,
         updateOrderStatus,
+        deleteOrder,
+        addManualOrder,
+        resetOrdersToSample,
         resetToSampleProducts,
       }}
     >

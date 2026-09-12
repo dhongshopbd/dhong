@@ -190,3 +190,143 @@ export const INITIAL_PRODUCTS: Product[] = [
   }
 ];
 
+export const INITIAL_ORDERS = [
+  {
+    id: 'DH-BD-928174',
+    createdAt: '2026-03-11T14:22:00Z',
+    customerName: 'Tasnim Farzana',
+    email: 'tasnim.f@gmail.com',
+    phone: '01711-482910',
+    address: 'House 42, Road 11, Block D, Banani',
+    city: 'Banani, Dhaka',
+    items: [
+      {
+        productId: 'dhong-001',
+        name: 'Aurelia Midnight Silk Evening Gown',
+        price: 4850,
+        size: 'M' as const,
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 4850,
+    shipping: 80,
+    total: 4930,
+    status: 'Pending' as const,
+    paymentMethod: 'Cash on Delivery (COD)' as const,
+    notes: 'Please call before delivery. Deliver between 2 PM - 6 PM.'
+  },
+  {
+    id: 'DH-BD-819302',
+    createdAt: '2026-03-10T18:45:00Z',
+    customerName: 'Nusrat Jahan Chowdhury',
+    email: 'nusrat.j@yahoo.com',
+    phone: '01819-338291',
+    address: 'Apt 5B, Mehedibag Tower, Nasirabad',
+    city: 'Nasirabad, Chittagong',
+    items: [
+      {
+        productId: 'dhong-003',
+        name: 'Celeste Crimson High-Slit Gala Gown',
+        price: 5900,
+        size: 'S' as const,
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        productId: 'dhong-002',
+        name: 'Solstice Emerald Velvet Cocktail Dress',
+        price: 3450,
+        size: 'S' as const,
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 9350,
+    shipping: 0, // Free delivery for 5000+
+    total: 9350,
+    status: 'Confirmed' as const,
+    paymentMethod: 'bKash / Nagad' as const,
+    courier: 'Steadfast Courier',
+    trackingCode: 'STF-CTG-88219'
+  },
+  {
+    id: 'DH-BD-736281',
+    createdAt: '2026-03-09T11:15:00Z',
+    customerName: 'Sadia Rahman',
+    email: 'sadia.rahman@outlook.com',
+    phone: '01972-910283',
+    address: 'Shahi Eidgah Road, Subidbazar',
+    city: 'Sylhet Sadar, Sylhet',
+    items: [
+      {
+        productId: 'dhong-007',
+        name: 'Saffron Organza Tiered Gown',
+        price: 5600,
+        size: 'L' as const,
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 5600,
+    shipping: 0,
+    total: 5600,
+    status: 'Shipped' as const,
+    paymentMethod: 'Cash on Delivery (COD)' as const,
+    courier: 'Pathao Courier',
+    trackingCode: 'PTH-SYL-49201'
+  },
+  {
+    id: 'DH-BD-625109',
+    createdAt: '2026-03-08T09:30:00Z',
+    customerName: 'Samira Akter',
+    email: 'samira.dhaka@gmail.com',
+    phone: '01683-119284',
+    address: 'Flat 4A, Plot 18, Road 3, Dhanmondi',
+    city: 'Dhanmondi, Dhaka',
+    items: [
+      {
+        productId: 'dhong-006',
+        name: 'Nocturne Noir Satin Slip Dress',
+        price: 2950,
+        size: 'M' as const,
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 2950,
+    shipping: 80,
+    total: 3030,
+    status: 'Delivered' as const,
+    paymentMethod: 'Debit/Credit Card' as const,
+    courier: 'RedX Express',
+    trackingCode: 'RDX-DHK-99120'
+  },
+  {
+    id: 'DH-BD-510928',
+    createdAt: '2026-03-07T16:20:00Z',
+    customerName: 'Mehnaz Kabir',
+    email: 'mehnaz.k@gmail.com',
+    phone: '01755-992812',
+    address: 'Kandirpar Main Road, Comilla',
+    city: 'Comilla Sadar, Comilla',
+    items: [
+      {
+        productId: 'dhong-010',
+        name: 'Cobalt Cutout Tiered Maxi Dress',
+        price: 3650,
+        size: 'XL' as const,
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1550614000-4895a10e1bfd?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 3650,
+    shipping: 130,
+    total: 3780,
+    status: 'Cancelled' as const,
+    paymentMethod: 'Cash on Delivery (COD)' as const,
+    notes: 'Customer changed event date. Order cancelled upon phone confirmation.'
+  }
+];
+
+
