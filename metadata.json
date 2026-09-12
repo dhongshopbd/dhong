@@ -1,0 +1,6 @@
+{
+  "name": "Dhong - Bangladeshi Designer Dress Collection",
+  "description": "Exclusive Bangladeshi designer dresses, party gowns, and ethnic couture by Dhong (ঢং). Nationwide delivery across Bangladesh, Cash on Delivery, bKash/Nagad.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
