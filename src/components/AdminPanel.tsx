@@ -155,13 +155,15 @@ export const AdminPanel: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-400 text-neutral-950 flex items-center justify-center font-brand font-bold text-lg shadow-sm">
-                D
-              </div>
+              <img
+                src="https://i.ibb.co.com/zVVGNSpd/bg.png"
+                alt="Dhong Logo"
+                className="h-10 w-auto object-contain brightness-110"
+              />
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-brand font-bold tracking-wider text-base">DHONG</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-amber-400 text-neutral-950">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-[#e32117] text-white">
                     ADMIN
                   </span>
                 </div>
@@ -181,7 +183,7 @@ export const AdminPanel: React.FC = () => {
                 className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-750 text-neutral-200 text-xs font-medium border border-neutral-700 flex items-center gap-1.5 transition-all"
               >
                 <span>View Live Storefront</span>
-                <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+                <ExternalLink className="w-3.5 h-3.5 text-red-500" />
               </button>
 
               <button
@@ -202,7 +204,7 @@ export const AdminPanel: React.FC = () => {
               onClick={() => setActiveTab('upload')}
               className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'upload'
-                  ? 'bg-amber-400 text-neutral-950 shadow'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
               }`}
             >
@@ -214,7 +216,7 @@ export const AdminPanel: React.FC = () => {
               onClick={() => setActiveTab('products')}
               className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'products'
-                  ? 'bg-amber-400 text-neutral-950 shadow'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
               }`}
             >
@@ -226,7 +228,7 @@ export const AdminPanel: React.FC = () => {
               onClick={() => setActiveTab('orders')}
               className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'orders'
-                  ? 'bg-amber-400 text-neutral-950 shadow'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
               }`}
             >
@@ -238,7 +240,7 @@ export const AdminPanel: React.FC = () => {
               onClick={() => setActiveTab('categories')}
               className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'categories'
-                  ? 'bg-amber-400 text-neutral-950 shadow'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
               }`}
             >
@@ -250,7 +252,7 @@ export const AdminPanel: React.FC = () => {
               onClick={() => setActiveTab('metrics')}
               className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all ${
                 activeTab === 'metrics'
-                  ? 'bg-amber-400 text-neutral-950 shadow'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
               }`}
             >
@@ -299,7 +301,7 @@ export const AdminPanel: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Saffron Organza Silk Party Gown"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                   />
                 </div>
 
@@ -312,7 +314,7 @@ export const AdminPanel: React.FC = () => {
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
                     placeholder="e.g. DH-BD-102"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
@@ -326,7 +328,7 @@ export const AdminPanel: React.FC = () => {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 focus:outline-none focus:border-red-500"
                   >
                     {categories.filter((c) => c !== 'All Dresses').map((cat) => (
                       <option key={cat} value={cat}>
@@ -348,7 +350,7 @@ export const AdminPanel: React.FC = () => {
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
                       placeholder="e.g. Velvet Shawl Gowns"
-                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 )}
@@ -364,7 +366,7 @@ export const AdminPanel: React.FC = () => {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="e.g. 4500"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
@@ -381,7 +383,7 @@ export const AdminPanel: React.FC = () => {
                     value={originalPrice}
                     onChange={(e) => setOriginalPrice(e.target.value)}
                     placeholder="e.g. 5200 (shows discount)"
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                   />
                 </div>
 
@@ -399,7 +401,7 @@ export const AdminPanel: React.FC = () => {
                           onClick={() => handleToggleSize(size)}
                           className={`w-9 h-9 rounded-lg text-xs font-bold transition-all ${
                             isSelected
-                              ? 'bg-amber-400 text-neutral-950 shadow-md'
+                              ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
                               : 'bg-neutral-950 border border-neutral-800 text-neutral-400 hover:border-neutral-700'
                           }`}
                         >
@@ -428,7 +430,7 @@ export const AdminPanel: React.FC = () => {
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                       placeholder="Paste image address: https://images.unsplash.com/..."
-                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                      className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                     />
                   </div>
                 </div>
@@ -441,7 +443,7 @@ export const AdminPanel: React.FC = () => {
                       type="button"
                       key={s.label}
                       onClick={() => setImageUrl(s.url)}
-                      className="text-[11px] px-2.5 py-1 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-750 transition-colors"
+                      className="text-[11px] px-2.5 py-1 rounded bg-neutral-800 text-neutral-300 hover:text-red-400 hover:bg-neutral-750 transition-colors"
                     >
                       {s.label}
                     </button>
@@ -482,7 +484,7 @@ export const AdminPanel: React.FC = () => {
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
                   placeholder="e.g. Georgette, Silk, Festive, Floor Length, Party, Dhaka"
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                 />
               </div>
 
@@ -496,7 +498,7 @@ export const AdminPanel: React.FC = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Details regarding drape, embroidery, lining, and sizing advice..."
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-amber-400"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                 />
               </div>
 
@@ -507,7 +509,7 @@ export const AdminPanel: React.FC = () => {
                     type="checkbox"
                     checked={inStock}
                     onChange={(e) => setInStock(e.target.checked)}
-                    className="rounded bg-neutral-950 border-neutral-700 text-amber-500 focus:ring-0"
+                    className="rounded bg-neutral-950 border-neutral-700 text-red-600 focus:ring-0"
                   />
                   <span>Product is In Stock</span>
                 </label>
@@ -517,7 +519,7 @@ export const AdminPanel: React.FC = () => {
                     type="checkbox"
                     checked={featured}
                     onChange={(e) => setFeatured(e.target.checked)}
-                    className="rounded bg-neutral-950 border-neutral-700 text-amber-500 focus:ring-0"
+                    className="rounded bg-neutral-950 border-neutral-700 text-red-600 focus:ring-0"
                   />
                   <span>Mark as "Featured / Couture Pick"</span>
                 </label>
@@ -528,7 +530,7 @@ export const AdminPanel: React.FC = () => {
                 <button
                   id="admin-submit-dress-btn"
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/20 flex items-center justify-center gap-2"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <span>Publish Dress to Storefront</span>
@@ -560,7 +562,7 @@ export const AdminPanel: React.FC = () => {
                     value={adminSearch}
                     onChange={(e) => setAdminSearch(e.target.value)}
                     placeholder="Search by title, SKU, tag..."
-                    className="bg-neutral-900 border border-neutral-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-amber-400"
+                    className="bg-neutral-900 border border-neutral-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-red-500"
                   />
                 </div>
 
@@ -625,7 +627,7 @@ export const AdminPanel: React.FC = () => {
                         </td>
 
                         {/* Price in BDT */}
-                        <td className="py-3 px-4 font-bold text-amber-300">
+                        <td className="py-3 px-4 font-bold text-red-400">
                           {formatBDT(p.price)}
                         </td>
 
@@ -649,7 +651,7 @@ export const AdminPanel: React.FC = () => {
                             <button
                               id={`admin-edit-${p.id}`}
                               onClick={() => setEditingProduct(p)}
-                              className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-amber-300 hover:text-white transition-all flex items-center gap-1"
+                              className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-red-400 hover:text-white transition-all flex items-center gap-1"
                               title="Edit post"
                             >
                               <Edit className="w-3.5 h-3.5" />
@@ -701,7 +703,7 @@ export const AdminPanel: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="p-5 rounded-2xl bg-neutral-900 border border-neutral-800">
                 <div className="text-neutral-400 text-xs uppercase tracking-wider">Total Dresses</div>
-                <div className="text-3xl font-bold font-brand text-amber-300 mt-2">{products.length}</div>
+                <div className="text-3xl font-bold font-brand text-red-400 mt-2">{products.length}</div>
                 <div className="text-[11px] text-emerald-400 mt-1">
                   {products.filter((p) => p.inStock).length} in stock
                 </div>
@@ -715,7 +717,7 @@ export const AdminPanel: React.FC = () => {
 
               <div className="p-5 rounded-2xl bg-neutral-900 border border-neutral-800">
                 <div className="text-neutral-400 text-xs uppercase tracking-wider">Gross Sales (BDT)</div>
-                <div className="text-3xl font-bold font-brand text-amber-400 mt-2">
+                <div className="text-3xl font-bold font-brand text-red-500 mt-2">
                   {formatBDT(orders.reduce((sum, o) => sum + o.total, 0))}
                 </div>
                 <div className="text-[11px] text-neutral-400 mt-1">From checkout purchases</div>
@@ -751,7 +753,7 @@ export const AdminPanel: React.FC = () => {
                   required
                   value={editingProduct.name}
                   onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-amber-400 focus:outline-none"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-red-500 focus:outline-none"
                 />
               </div>
 
@@ -763,7 +765,7 @@ export const AdminPanel: React.FC = () => {
                     required
                     value={editingProduct.price}
                     onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-amber-400 focus:outline-none"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-red-500 focus:outline-none"
                   />
                 </div>
 
@@ -772,7 +774,7 @@ export const AdminPanel: React.FC = () => {
                   <select
                     value={editingProduct.category}
                     onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-amber-400 focus:outline-none"
+                    className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-red-500 focus:outline-none"
                   >
                     {categories.filter((c) => c !== 'All Dresses').map((cat) => (
                       <option key={cat} value={cat}>
@@ -790,7 +792,7 @@ export const AdminPanel: React.FC = () => {
                   required
                   value={editingProduct.imageUrl}
                   onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-amber-400 focus:outline-none"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-red-500 focus:outline-none"
                 />
               </div>
 
@@ -800,7 +802,7 @@ export const AdminPanel: React.FC = () => {
                   rows={3}
                   value={editingProduct.description}
                   onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-amber-400 focus:outline-none"
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:border-red-500 focus:outline-none"
                 />
               </div>
 
@@ -810,7 +812,7 @@ export const AdminPanel: React.FC = () => {
                     type="checkbox"
                     checked={editingProduct.inStock}
                     onChange={(e) => setEditingProduct({ ...editingProduct, inStock: e.target.checked })}
-                    className="rounded bg-neutral-950 border-neutral-700 text-amber-500"
+                    className="rounded bg-neutral-950 border-neutral-700 text-red-600"
                   />
                   <span>In Stock</span>
                 </label>
@@ -820,7 +822,7 @@ export const AdminPanel: React.FC = () => {
                     type="checkbox"
                     checked={editingProduct.featured || false}
                     onChange={(e) => setEditingProduct({ ...editingProduct, featured: e.target.checked })}
-                    className="rounded bg-neutral-950 border-neutral-700 text-amber-500"
+                    className="rounded bg-neutral-950 border-neutral-700 text-red-600"
                   />
                   <span>Featured Post</span>
                 </label>
@@ -836,7 +838,7 @@ export const AdminPanel: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-lg bg-amber-400 text-neutral-950 font-bold"
+                  className="px-5 py-2 rounded-lg bg-[#e32117] hover:bg-red-700 text-white font-bold"
                 >
                   Save Changes
                 </button>

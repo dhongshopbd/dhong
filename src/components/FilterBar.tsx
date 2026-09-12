@@ -58,12 +58,12 @@ export const FilterBar: React.FC = () => {
               onClick={clearCategoriesFilter}
               className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1.5 shrink-0 transition-all ${
                 filters.selectedCategories.length === 0
-                  ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
+                  ? 'bg-red-600 text-white font-bold shadow-sm'
                   : 'bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-750 border border-neutral-700/60'
               }`}
             >
               {filters.selectedCategories.length === 0 ? (
-                <CheckSquare className="w-3.5 h-3.5 text-neutral-950" />
+                <CheckSquare className="w-3.5 h-3.5 text-white" />
               ) : (
                 <Square className="w-3.5 h-3.5 text-neutral-400" />
               )}
@@ -79,12 +79,12 @@ export const FilterBar: React.FC = () => {
                   onClick={() => toggleCategoryFilter(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1.5 shrink-0 transition-all ${
                     isChecked
-                      ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
+                      ? 'bg-red-600 text-white font-bold shadow-sm'
                       : 'bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-750 border border-neutral-700/60'
                   }`}
                 >
                   {isChecked ? (
-                    <CheckSquare className="w-3.5 h-3.5 text-neutral-950" />
+                    <CheckSquare className="w-3.5 h-3.5 text-white" />
                   ) : (
                     <Square className="w-3.5 h-3.5 text-neutral-400" />
                   )}
@@ -101,12 +101,12 @@ export const FilterBar: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-neutral-400 text-xs font-medium hidden sm:inline">Sort:</span>
               <div className="relative flex items-center">
-                <ArrowUpDown className="w-3.5 h-3.5 text-amber-400 absolute left-3 pointer-events-none" />
+                <ArrowUpDown className="w-3.5 h-3.5 text-red-500 absolute left-3 pointer-events-none" />
                 <select
                   id="sort-select-bdt"
                   value={filters.sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-neutral-100 text-xs rounded-full pl-8 pr-7 py-1.5 appearance-none focus:outline-none focus:border-amber-400 font-medium cursor-pointer transition-colors"
+                  className="bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-neutral-100 text-xs rounded-full pl-8 pr-7 py-1.5 appearance-none focus:outline-none focus:border-red-500 font-medium cursor-pointer transition-colors"
                 >
                   <option value="featured">✨ Featured Dresses</option>
                   <option value="price-asc">💵 Price: Low to High (৳)</option>
@@ -122,14 +122,14 @@ export const FilterBar: React.FC = () => {
               onClick={() => setShowTickModal(!showTickModal)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 border transition-all ${
                 showTickModal || totalActiveTicks > 0
-                  ? 'bg-amber-400 text-neutral-950 border-amber-400 shadow-sm'
+                  ? 'bg-red-600 text-white border-red-600 shadow-sm'
                   : 'bg-neutral-800 text-neutral-200 border-neutral-700 hover:bg-neutral-750'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Tick Filters</span>
               {totalActiveTicks > 0 && (
-                <span className="w-4 h-4 rounded-full bg-neutral-950 text-amber-300 text-[10px] font-bold flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-white text-red-600 text-[10px] font-bold flex items-center justify-center">
                   {totalActiveTicks}
                 </span>
               )}
@@ -140,7 +140,7 @@ export const FilterBar: React.FC = () => {
               <button
                 id="quick-reset-filters-btn"
                 onClick={resetFilters}
-                className="text-neutral-400 hover:text-amber-400 text-xs flex items-center gap-1 transition-colors"
+                className="text-neutral-400 hover:text-red-400 text-xs flex items-center gap-1 transition-colors"
                 title="Reset all filters"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -170,12 +170,12 @@ export const FilterBar: React.FC = () => {
                     onClick={() => toggleSizeFilter(sz as DressSize)}
                     className={`px-2.5 py-1 rounded text-xs font-semibold flex items-center gap-1 transition-all ${
                       isChecked
-                        ? 'bg-amber-400 text-neutral-950 shadow-sm'
+                        ? 'bg-red-600 text-white shadow-sm'
                         : 'bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-700/80 hover:border-neutral-600'
                     }`}
                   >
                     {isChecked ? (
-                      <Check className="w-3 h-3 text-neutral-950 stroke-[3]" />
+                      <Check className="w-3 h-3 text-white stroke-[3]" />
                     ) : (
                       <span className="w-2.5 h-2.5 rounded-[2px] border border-neutral-500 inline-block" />
                     )}
@@ -201,12 +201,12 @@ export const FilterBar: React.FC = () => {
                     onClick={() => togglePriceRangeFilter(opt.key)}
                     className={`px-2.5 py-1 rounded text-xs font-medium flex items-center gap-1 transition-all ${
                       isChecked
-                        ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
+                        ? 'bg-red-600 text-white font-bold shadow-sm'
                         : 'bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-700/80 hover:border-neutral-600'
                     }`}
                   >
                     {isChecked ? (
-                      <Check className="w-3 h-3 text-neutral-950 stroke-[3]" />
+                      <Check className="w-3 h-3 text-white stroke-[3]" />
                     ) : (
                       <span className="w-2.5 h-2.5 rounded-[2px] border border-neutral-500 inline-block" />
                     )}
@@ -221,7 +221,7 @@ export const FilterBar: React.FC = () => {
           {/* Product Count Display */}
           <div className="text-xs text-neutral-400 ml-auto flex items-center gap-2">
             <span>
-              Showing <strong className="text-amber-400 font-bold">{filteredProducts.length}</strong> dresses
+              Showing <strong className="text-red-400 font-bold">{filteredProducts.length}</strong> dresses
             </span>
           </div>
 
@@ -233,7 +233,7 @@ export const FilterBar: React.FC = () => {
             
             <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
               <div className="flex items-center gap-2">
-                <CheckSquare className="w-4 h-4 text-amber-400" />
+                <CheckSquare className="w-4 h-4 text-red-500" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-200">
                   Detailed Filter Criteria (Tick what you want)
                 </h4>
@@ -255,7 +255,7 @@ export const FilterBar: React.FC = () => {
                   {filters.selectedCategories.length > 0 && (
                     <button
                       onClick={clearCategoriesFilter}
-                      className="text-[11px] text-amber-400 hover:underline lowercase font-normal"
+                      className="text-[11px] text-red-400 hover:underline lowercase font-normal"
                     >
                       clear
                     </button>
@@ -268,14 +268,14 @@ export const FilterBar: React.FC = () => {
                       <label
                         key={cat}
                         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer text-xs transition-colors ${
-                          isChecked ? 'bg-neutral-800 text-amber-300 font-semibold' : 'text-neutral-300 hover:bg-neutral-900'
+                          isChecked ? 'bg-neutral-800 text-red-400 font-semibold' : 'text-neutral-300 hover:bg-neutral-900'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleCategoryFilter(cat)}
-                          className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-red-600 focus:ring-red-500/30 accent-red-600 cursor-pointer"
                         />
                         <span>{cat}</span>
                       </label>
@@ -296,14 +296,14 @@ export const FilterBar: React.FC = () => {
                       <label
                         key={opt.key}
                         className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer text-xs transition-colors ${
-                          isChecked ? 'bg-neutral-800 text-amber-300 font-semibold' : 'text-neutral-300 hover:bg-neutral-900'
+                          isChecked ? 'bg-neutral-800 text-red-400 font-semibold' : 'text-neutral-300 hover:bg-neutral-900'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => togglePriceRangeFilter(opt.key)}
-                          className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-red-600 focus:ring-red-500/30 accent-red-600 cursor-pointer"
                         />
                         <span>{opt.label}</span>
                       </label>
@@ -317,9 +317,9 @@ export const FilterBar: React.FC = () => {
                       type="checkbox"
                       checked={filters.onlyDiscounted}
                       onChange={(e) => setOnlyDiscounted(e.target.checked)}
-                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-red-600 focus:ring-red-500/30 accent-red-600 cursor-pointer"
                     />
-                    <span className="text-amber-400 font-medium">On Sale / Discounted only</span>
+                    <span className="text-red-400 font-medium">On Sale / Discounted only</span>
                   </label>
 
                   <label className="flex items-center gap-2 px-2.5 py-1 rounded-lg cursor-pointer text-xs text-neutral-300 hover:bg-neutral-900">
@@ -327,7 +327,7 @@ export const FilterBar: React.FC = () => {
                       type="checkbox"
                       checked={filters.onlyInStock}
                       onChange={(e) => setOnlyInStock(e.target.checked)}
-                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-amber-500 focus:ring-amber-500/30 accent-amber-500 cursor-pointer"
+                      className="w-4 h-4 rounded border-neutral-700 bg-neutral-900 text-red-600 focus:ring-red-500/30 accent-red-600 cursor-pointer"
                     />
                     <span>In Stock items only</span>
                   </label>
@@ -337,7 +337,7 @@ export const FilterBar: React.FC = () => {
               {/* Column 3: Fabric & Style Tags */}
               <div>
                 <h5 className="text-xs font-semibold text-neutral-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-amber-400" />
+                  <Tag className="w-3.5 h-3.5 text-red-500" />
                   <span>Fabric & Silhouette Tags</span>
                 </h5>
                 <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
@@ -349,12 +349,12 @@ export const FilterBar: React.FC = () => {
                         onClick={() => toggleTagFilter(tag)}
                         className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all flex items-center gap-1 ${
                           isChecked
-                            ? 'bg-amber-400 text-neutral-950 font-bold border-amber-400'
+                            ? 'bg-red-600 text-white font-bold border-red-600'
                             : 'bg-neutral-900 border-neutral-750 text-neutral-300 hover:border-neutral-600 hover:text-white'
                         }`}
                       >
                         {isChecked ? (
-                          <Check className="w-3 h-3 text-neutral-950 stroke-[3]" />
+                          <Check className="w-3 h-3 text-white stroke-[3]" />
                         ) : (
                           <span className="w-2 h-2 rounded-full bg-neutral-600 inline-block" />
                         )}
@@ -371,13 +371,13 @@ export const FilterBar: React.FC = () => {
             <div className="flex items-center justify-between pt-3 border-t border-neutral-800">
               <button
                 onClick={resetFilters}
-                className="px-4 py-2 rounded-lg text-xs font-semibold text-neutral-400 hover:text-amber-400 transition-colors"
+                className="px-4 py-2 rounded-lg text-xs font-semibold text-neutral-400 hover:text-red-400 transition-colors"
               >
                 Clear all tick marks
               </button>
               <button
                 onClick={() => setShowTickModal(false)}
-                className="px-6 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all"
+                className="px-6 py-2 rounded-lg bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/20"
               >
                 Apply ({filteredProducts.length} Results)
               </button>

@@ -45,7 +45,7 @@ export const CategoriesManager: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-brand text-2xl font-bold tracking-tight text-neutral-100 flex items-center gap-2">
-            <Layers className="w-6 h-6 text-amber-400" />
+            <Layers className="w-6 h-6 text-red-500" />
             Categories Management ({categories.length})
           </h2>
           <p className="text-xs text-neutral-400 mt-1">
@@ -55,10 +55,10 @@ export const CategoriesManager: React.FC = () => {
       </div>
 
       {/* Info Notice */}
-      <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200">
-        <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+      <div className="p-4 rounded-2xl bg-red-950/30 border border-red-500/30 flex items-start gap-3 text-xs text-red-200">
+        <Sparkles className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <p className="font-semibold text-amber-300">Automatic Real-Time Synchronization</p>
+          <p className="font-semibold text-red-300">Automatic Real-Time Synchronization</p>
           <p className="text-neutral-300 leading-relaxed">
             Whenever you add a category here or assign a new category while uploading a dress in "Upload New Dress", Dhong instantly appends it to the top navigation bar, the category dropdown menus, and the sidebar filter checkmarks without any page reload.
           </p>
@@ -68,7 +68,7 @@ export const CategoriesManager: React.FC = () => {
       {/* Add New Category Form */}
       <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-lg">
         <h3 className="text-sm font-bold uppercase tracking-wider text-neutral-200 mb-3 flex items-center gap-2">
-          <Plus className="w-4 h-4 text-amber-400" />
+          <Plus className="w-4 h-4 text-red-500" />
           Add New Category
         </h3>
         
@@ -80,12 +80,12 @@ export const CategoriesManager: React.FC = () => {
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
               placeholder="e.g. Bridal Lehengas, Organza Sarees, Velvet Kaftans, Abayas..."
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-amber-400 transition-colors"
+              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:border-red-500 transition-colors"
             />
           </div>
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 shrink-0"
+            className="px-6 py-2.5 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/20 flex items-center justify-center gap-2 shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create Category</span>
@@ -112,14 +112,14 @@ export const CategoriesManager: React.FC = () => {
               className="bg-neutral-900 border border-neutral-800 hover:border-neutral-700 rounded-2xl p-4 flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-center text-amber-400 font-bold text-sm">
+                <div className="w-10 h-10 rounded-xl bg-neutral-950 border border-neutral-800 flex items-center justify-center text-red-400 font-bold text-sm">
                   {cat.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
                   <div className="font-semibold text-neutral-200 text-sm flex items-center gap-2">
                     <span>{cat}</span>
                     {isCustom && (
-                      <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-red-950/60 text-red-300 border border-red-500/30">
                         Custom
                       </span>
                     )}
@@ -134,7 +134,7 @@ export const CategoriesManager: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => selectCategoryOnly(cat)}
-                  className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-amber-300 transition-colors"
+                  className="p-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-red-400 transition-colors"
                   title="View this category in storefront"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />

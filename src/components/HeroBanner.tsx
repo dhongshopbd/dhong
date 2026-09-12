@@ -6,19 +6,19 @@ export const HeroBanner: React.FC = () => {
   const { toggleCategoryFilter, setSortBy } = useStore();
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-neutral-100 via-amber-50/40 to-neutral-50 border-b border-neutral-200/80 pt-8 pb-10 text-neutral-900">
+    <div className="relative overflow-hidden bg-gradient-to-b from-neutral-100 via-rose-50/25 to-neutral-50 border-b border-neutral-200/80 pt-8 pb-10 text-neutral-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           
           <div className="lg:col-span-8 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-300/80 text-amber-900 text-xs font-semibold tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-              <span>DHONG (ঢং) 2026 EID & COUTURE COLLECTION</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-red-700 text-xs font-semibold tracking-wider mb-3 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-red-600" />
+              <span>DHONG (ঢং) 2026 EID & LUXURY COUTURE</span>
             </div>
 
             <h1 className="font-brand text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-neutral-900 leading-[1.18] mb-3">
               Elegance for Every Occasion. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-amber-600 to-amber-900">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 via-rose-600 to-red-900">
                 Tailored for Bangladeshi Women.
               </span>
             </h1>
@@ -32,7 +32,7 @@ export const HeroBanner: React.FC = () => {
               <button
                 id="hero-party-gowns-btn"
                 onClick={() => toggleCategoryFilter('Party Gowns')}
-                className="px-5 py-2.5 rounded-full bg-neutral-900 hover:bg-black text-white font-semibold text-xs tracking-wider uppercase transition-all shadow-md flex items-center gap-2"
+                className="px-5 py-2.5 rounded-full bg-[#e32117] hover:bg-red-700 text-white font-semibold text-xs tracking-wider uppercase transition-all shadow-md shadow-red-600/20 flex items-center gap-2"
               >
                 <span>Party Gowns</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -57,7 +57,7 @@ export const HeroBanner: React.FC = () => {
               <button
                 id="hero-deals-btn"
                 onClick={() => setSortBy('price-asc')}
-                className="px-4 py-2.5 rounded-full text-amber-800 hover:text-amber-950 text-xs font-bold tracking-wider transition-colors"
+                className="px-4 py-2.5 rounded-full text-red-700 hover:text-red-900 text-xs font-bold tracking-wider transition-colors"
               >
                 Price: Low to High (৳) →
               </button>
@@ -67,7 +67,7 @@ export const HeroBanner: React.FC = () => {
           {/* Bangladeshi Marketing Value Perks */}
           <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
             <div className="p-3.5 rounded-xl bg-white border border-neutral-200/80 shadow-xs flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+              <div className="p-2 rounded-lg bg-rose-50 text-red-600 border border-rose-200 shrink-0">
                 <Truck className="w-4 h-4" />
               </div>
               <div>
@@ -87,7 +87,7 @@ export const HeroBanner: React.FC = () => {
             </div>
 
             <div className="p-3.5 rounded-xl bg-white border border-neutral-200/80 shadow-xs flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+              <div className="p-2 rounded-lg bg-rose-50 text-red-600 border border-rose-200 shrink-0">
                 <RefreshCw className="w-4 h-4" />
               </div>
               <div>

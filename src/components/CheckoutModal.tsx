@@ -61,7 +61,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
         {/* Header */}
         <div className="p-5 border-b border-neutral-200 flex items-center justify-between bg-neutral-50">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-amber-600" />
+            <ShoppingBag className="w-5 h-5 text-red-600" />
             <h3 className="font-brand text-lg font-bold tracking-wider text-neutral-900">
               {completedOrder ? 'Order Confirmed' : 'Complete Your Order (Bangladesh)'}
             </h3>
@@ -99,7 +99,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
             <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-left max-w-md mx-auto space-y-2 text-xs">
               <div className="flex justify-between border-b border-neutral-200 pb-2">
                 <span className="text-neutral-500">Order ID:</span>
-                <span className="font-mono font-bold text-amber-800">{completedOrder.id}</span>
+                <span className="font-mono font-bold text-red-700">{completedOrder.id}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-500">Customer:</span>
@@ -119,7 +119,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               </div>
               <div className="flex justify-between font-bold text-sm pt-2 border-t border-neutral-200">
                 <span className="text-neutral-800">Total Payable Amount:</span>
-                <span className="text-amber-800 font-extrabold">{formatBDT(completedOrder.total)}</span>
+                <span className="text-red-700 font-extrabold">{formatBDT(completedOrder.total)}</span>
               </div>
             </div>
 
@@ -140,7 +140,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
             {/* Customer Details Form */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-red-700">
                   1. Delivery & Contact Details
                 </h4>
                 <span className="text-[11px] text-neutral-500">Nationwide across 64 districts</span>
@@ -157,7 +157,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                     value={formData.customerName}
                     onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                     placeholder="e.g. Nusrat Jahan"
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-red-500"
                   />
                 </div>
 
@@ -171,7 +171,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="e.g. 01712345678"
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>
@@ -185,7 +185,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="For invoice and parcel tracking"
-                  className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-amber-500"
+                  className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-red-500"
                 />
               </div>
 
@@ -200,7 +200,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="e.g. House 42, Road 11, Banani"
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-red-500"
                   />
                 </div>
 
@@ -211,7 +211,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                   <select
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 focus:outline-none focus:border-red-500"
                   >
                     <option value="Dhaka">Dhaka (৳80)</option>
                     <option value="Chittagong">Chittagong (৳130)</option>
@@ -229,7 +229,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
 
             {/* Payment Method */}
             <div className="space-y-3 pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-red-700">
                 2. Select Preferred Payment Method
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -238,11 +238,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                   onClick={() => setFormData({ ...formData, paymentMethod: 'Cash on Delivery (COD)' })}
                   className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
                     formData.paymentMethod === 'Cash on Delivery (COD)'
-                      ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400/40 text-neutral-900'
+                      ? 'bg-rose-50 border-red-500 ring-2 ring-red-400/40 text-neutral-900'
                       : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
                   }`}
                 >
-                  <Banknote className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <Banknote className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <div className="text-xs font-bold text-neutral-900">Cash on Delivery</div>
                     <div className="text-[10px] text-neutral-500 mt-0.5">Pay upon checking dress</div>
@@ -254,7 +254,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                   onClick={() => setFormData({ ...formData, paymentMethod: 'bKash / Nagad' })}
                   className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
                     formData.paymentMethod === 'bKash / Nagad'
-                      ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400/40 text-neutral-900'
+                      ? 'bg-rose-50 border-red-500 ring-2 ring-red-400/40 text-neutral-900'
                       : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
                   }`}
                 >
@@ -272,11 +272,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                   onClick={() => setFormData({ ...formData, paymentMethod: 'Debit/Credit Card' })}
                   className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition-all ${
                     formData.paymentMethod === 'Debit/Credit Card'
-                      ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-400/40 text-neutral-900'
+                      ? 'bg-rose-50 border-red-500 ring-2 ring-red-400/40 text-neutral-900'
                       : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
                   }`}
                 >
-                  <CreditCard className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <CreditCard className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <div className="text-xs font-bold text-neutral-900">Debit / Credit Card</div>
                     <div className="text-[10px] text-neutral-500 mt-0.5">Visa, Mastercard, Amex</div>
@@ -299,7 +299,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               </div>
               <div className="flex justify-between text-sm font-bold text-neutral-900 pt-2 border-t border-neutral-200">
                 <span>Total Amount Due:</span>
-                <span className="text-amber-800 text-base font-extrabold">{formatBDT(total)}</span>
+                <span className="text-red-700 text-base font-extrabold">{formatBDT(total)}</span>
               </div>
             </div>
 
@@ -308,7 +308,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               id="submit-order-btn"
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md shadow-red-600/20 disabled:opacity-50"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>{isSubmitting ? 'Confirming Order...' : `Confirm & Place Order (${formatBDT(total)})`}</span>

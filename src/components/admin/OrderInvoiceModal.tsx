@@ -22,13 +22,13 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, onC
         {/* Modal Top Actions (Hidden when printing) */}
         <div className="p-4 bg-neutral-900 text-white flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2">
-            <span className="font-brand font-bold text-amber-400 tracking-wider">DHONG BD</span>
+            <span className="font-brand font-bold text-red-500 tracking-wider">DHONG BD</span>
             <span className="text-xs text-neutral-400">• Official Order Invoice</span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm shadow-red-600/30"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Invoice</span>
@@ -49,17 +49,24 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, onC
           {/* Header */}
           <div className="flex justify-between items-start border-b border-neutral-200 pb-5">
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-brand text-3xl font-bold tracking-widest text-neutral-950">
-                  DHONG
-                </span>
-                <span className="text-amber-500 font-serif text-lg leading-none font-bold">.</span>
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="https://i.ibb.co.com/zVVGNSpd/bg.png"
+                  alt="Dhong"
+                  className="h-10 w-auto object-contain"
+                />
+                <div>
+                  <span className="font-brand text-2xl font-bold tracking-widest text-neutral-950">
+                    DHONG
+                  </span>
+                  <span className="text-xs text-red-600 font-semibold ml-2">ঢং ফ্যাশন</span>
+                </div>
               </div>
-              <p className="text-xs text-neutral-500 tracking-wider mt-0.5 uppercase">
+              <p className="text-xs text-neutral-500 tracking-wider mt-1 uppercase">
                 High Fashion & Designer Dresses • Bangladesh
               </p>
               <p className="text-[11px] text-neutral-400 mt-1">
-                Dhaka, Bangladesh • Helpline: +880 1711-000000 • support@dhong.com.bd
+                Dhaka, Bangladesh • Helpline: +880 1711-223344 • support@dhongfashion.com
               </p>
             </div>
 
@@ -81,7 +88,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, onC
                     ? 'bg-blue-100 text-blue-800'
                     : order.status === 'Cancelled'
                     ? 'bg-rose-100 text-rose-800'
-                    : 'bg-amber-100 text-amber-800'
+                    : 'bg-rose-100 text-red-800'
                 }`}>
                   Status: {order.status}
                 </span>
@@ -92,7 +99,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, onC
           {/* Customer & Shipping Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200 text-xs">
             <div>
-              <h4 className="font-bold text-neutral-900 uppercase tracking-wider text-[10px] mb-2 flex items-center gap-1 text-amber-700">
+              <h4 className="font-bold text-neutral-900 uppercase tracking-wider text-[10px] mb-2 flex items-center gap-1 text-red-700">
                 <MapPin className="w-3.5 h-3.5" />
                 Delivery Information
               </h4>
@@ -102,7 +109,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, onC
             </div>
 
             <div>
-              <h4 className="font-bold text-neutral-900 uppercase tracking-wider text-[10px] mb-2 flex items-center gap-1 text-amber-700">
+              <h4 className="font-bold text-neutral-900 uppercase tracking-wider text-[10px] mb-2 flex items-center gap-1 text-red-700">
                 <Phone className="w-3.5 h-3.5" />
                 Contact & Payment
               </h4>
@@ -180,14 +187,14 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, onC
               </div>
               <div className="flex justify-between py-2 text-sm font-bold text-neutral-950 border-b-2 border-neutral-900">
                 <span>Grand Total (BDT):</span>
-                <span className="text-amber-700 font-brand text-base">{formatBDT(order.total)}</span>
+                <span className="text-red-700 font-brand text-base">{formatBDT(order.total)}</span>
               </div>
             </div>
           </div>
 
           {/* Notes if any */}
           {order.notes && (
-            <div className="p-3 bg-amber-50/60 border border-amber-200 rounded-xl text-xs text-amber-900">
+            <div className="p-3 bg-neutral-100 border border-neutral-300 rounded-xl text-xs text-neutral-800">
               <strong>Order Notes / Special Instructions:</strong> {order.notes}
             </div>
           )}

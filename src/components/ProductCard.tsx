@@ -36,7 +36,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div
       id={`product-card-${product.id}`}
       onClick={handleCardClick}
-      className="group flex flex-col bg-white border border-neutral-200 hover:border-amber-500/50 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-neutral-300/40 relative text-neutral-900"
+      className="group flex flex-col bg-white border border-neutral-200 hover:border-red-500/50 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-red-950/10 relative text-neutral-900"
     >
       {/* Dress Image Showcase */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-100">
@@ -54,7 +54,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Marketing Badges on Top */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
           {product.featured && (
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400 text-neutral-950 shadow-sm">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-600 text-white shadow-sm">
               Featured Pick
             </span>
           )}
@@ -86,9 +86,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               e.stopPropagation();
               setSelectedProduct(product);
             }}
-            className="flex-1 py-2 px-3 bg-neutral-900/90 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl backdrop-blur-md flex items-center justify-center gap-1.5 transition-all shadow-md"
+            className="flex-1 py-2 px-3 bg-neutral-900/90 hover:bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl backdrop-blur-md flex items-center justify-center gap-1.5 transition-all shadow-md hover:text-red-400"
           >
-            <Eye className="w-3.5 h-3.5 text-amber-400" />
+            <Eye className="w-3.5 h-3.5 text-red-500" />
             <span>Quick View</span>
           </button>
         </div>
@@ -99,12 +99,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div>
           {/* Category & SKU */}
           <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-neutral-500 mb-1">
-            <span className="text-amber-800 font-bold">{product.category}</span>
+            <span className="text-red-700 font-bold">{product.category}</span>
             <span className="text-neutral-400 font-mono text-[10px]">{product.sku}</span>
           </div>
 
           {/* Product Title */}
-          <h3 className="text-sm sm:text-base font-semibold text-neutral-900 group-hover:text-amber-700 transition-colors line-clamp-1 mb-1.5">
+          <h3 className="text-sm sm:text-base font-semibold text-neutral-900 group-hover:text-red-700 transition-colors line-clamp-1 mb-1.5">
             {product.name}
           </h3>
 
@@ -119,7 +119,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   onClick={() => setSelectedQuickSize(size)}
                   className={`px-1.5 py-0.5 rounded text-[10px] font-semibold transition-all ${
                     selectedQuickSize === size
-                      ? 'bg-amber-400 text-neutral-950 font-bold'
+                      ? 'bg-red-600 text-white font-bold'
                       : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 border border-neutral-200'
                   }`}
                   title={`Select size ${size}`}
@@ -153,7 +153,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
                 : isAddedAnim
                 ? 'bg-emerald-600 text-white'
-                : 'bg-amber-400 hover:bg-amber-300 text-neutral-950 shadow-sm'
+                : 'bg-[#e32117] hover:bg-red-700 text-white shadow-sm shadow-red-600/20'
             }`}
             title={product.inStock ? `Add size ${selectedQuickSize} to Bag` : 'Out of stock'}
           >

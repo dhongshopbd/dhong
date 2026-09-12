@@ -56,11 +56,11 @@ export const ProductModal: React.FC = () => {
               className="w-full h-full object-cover object-center"
             />
             <div className="absolute top-4 left-4 flex flex-col gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/95 backdrop-blur-md border border-neutral-200 text-amber-900 shadow-sm">
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/95 backdrop-blur-md border border-neutral-200 text-neutral-900 shadow-sm">
                 {selectedProduct.category}
               </span>
               {selectedProduct.featured && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-400 text-neutral-950 shadow-sm">
+                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-600 text-white shadow-sm">
                   Featured Pick
                 </span>
               )}
@@ -99,8 +99,8 @@ export const ProductModal: React.FC = () => {
               </div>
 
               {/* Bangladesh Delivery Badge */}
-              <div className="mb-5 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 flex items-center gap-2.5 text-xs text-amber-900">
-                <Truck className="w-4 h-4 text-amber-700 shrink-0" />
+              <div className="mb-5 p-2.5 rounded-xl bg-rose-50 border border-rose-200/80 flex items-center gap-2.5 text-xs text-red-950">
+                <Truck className="w-4 h-4 text-red-600 shrink-0" />
                 <span>Nationwide delivery in Bangladesh. Cash on Delivery (COD) & bKash available.</span>
               </div>
 
@@ -113,7 +113,7 @@ export const ProductModal: React.FC = () => {
               {selectedProduct.tags && selectedProduct.tags.length > 0 && (
                 <div className="mb-6">
                   <div className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-2 flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-amber-600" />
+                    <Tag className="w-3.5 h-3.5 text-red-600" />
                     <span>Fabric & Silhouette</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -145,7 +145,7 @@ export const ProductModal: React.FC = () => {
                         onClick={() => setSelectedSize(size)}
                         className={`w-11 h-11 rounded-xl text-xs font-bold tracking-wider border transition-all flex items-center justify-center ${
                           isCurrent
-                            ? 'bg-amber-400 border-amber-400 text-neutral-950 shadow-sm scale-105'
+                            ? 'bg-red-600 border-red-600 text-white shadow-sm scale-105'
                             : 'bg-white border-neutral-200 text-neutral-800 hover:border-neutral-400 hover:bg-neutral-50'
                         }`}
                       >
@@ -201,7 +201,7 @@ export const ProductModal: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <ShoppingBag className="w-4 h-4 text-amber-600" />
+                      <ShoppingBag className="w-4 h-4 text-red-600" />
                       <span>Add to Bag</span>
                     </>
                   )}
@@ -211,20 +211,20 @@ export const ProductModal: React.FC = () => {
                   id="modal-buy-now-btn"
                   disabled={!selectedProduct.inStock}
                   onClick={handleBuyNow}
-                  className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md ${
+                  className={`w-full py-3.5 px-4 rounded-xl font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md shadow-red-600/20 ${
                     !selectedProduct.inStock
                       ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-                      : 'bg-neutral-900 hover:bg-black text-white'
+                      : 'bg-[#e32117] hover:bg-red-700 text-white'
                   }`}
                 >
-                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <Sparkles className="w-4 h-4 text-white" />
                   <span>Buy Now</span>
                 </button>
               </div>
 
               {/* Guarantee Note */}
               <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-500 pt-1">
-                <Shield className="w-3.5 h-3.5 text-amber-600" />
+                <Shield className="w-3.5 h-3.5 text-red-600" />
                 <span>100% Genuine fabric guarantee & easy 7-day size exchange across Bangladesh</span>
               </div>
             </div>

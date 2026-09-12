@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
       <div className="border-b border-neutral-800 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-6 space-y-2">
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-red-500 text-xs font-bold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Dhong (ঢং) VIP Member Perks</span>
             </div>
@@ -36,7 +36,7 @@ export const Footer: React.FC = () => {
 
           <div className="lg:col-span-6">
             {isSubscribed ? (
-              <div className="p-4 rounded-xl bg-neutral-800 border border-amber-400/50 text-amber-300 text-sm font-semibold">
+              <div className="p-4 rounded-xl bg-neutral-800 border border-red-500/50 text-red-400 text-sm font-semibold">
                 Welcome to Dhong family! Use promo code DHONG500 at checkout.
               </div>
             ) : (
@@ -47,11 +47,11 @@ export const Footer: React.FC = () => {
                   value={emailSub}
                   onChange={(e) => setEmailSub(e.target.value)}
                   placeholder="Enter your phone or email..."
-                  className="flex-1 bg-neutral-950 border border-neutral-700 rounded-full px-4 py-3 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-400"
+                  className="flex-1 bg-neutral-950 border border-neutral-700 rounded-full px-4 py-3 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-red-500"
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3 rounded-full bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shrink-0"
+                  className="px-6 py-3 rounded-full bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-red-600/20 shrink-0"
                 >
                   <span>Claim</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -68,27 +68,33 @@ export const Footer: React.FC = () => {
           
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-1.5">
-              <span className="font-brand text-2xl font-bold tracking-widest text-neutral-100">
-                DHONG
-              </span>
-              <span className="text-amber-500 font-serif text-lg font-bold">.</span>
-              <span className="text-xs text-amber-400 font-medium ml-1">ঢং ফ্যাশন</span>
+            <div className="flex items-center gap-3">
+              <img
+                src="https://i.ibb.co.com/zVVGNSpd/bg.png"
+                alt="Dhong Logo"
+                className="h-10 w-auto object-contain brightness-110"
+              />
+              <div className="flex flex-col">
+                <span className="font-brand text-xl font-bold tracking-widest text-neutral-100 leading-none">
+                  DHONG
+                </span>
+                <span className="text-[11px] text-red-500 font-medium tracking-wider mt-0.5">ঢং এক্সক্লুসিভ ফ্যাশন</span>
+              </div>
             </div>
             <p className="text-neutral-400 leading-relaxed font-light pr-6">
               Dhong is Bangladesh’s premier designer dress house, handcrafting evening gowns, festive anarkalis, fluid mulberry silks, and contemporary cocktail frocks for discerning women across Dhaka, Chittagong, Sylhet, and all 64 districts.
             </p>
             <div className="space-y-1.5 text-[11px] text-neutral-400 pt-1">
               <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
                 <span>Road 11, Banani & Dhanmondi 27, Dhaka, Bangladesh</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <Phone className="w-3.5 h-3.5 text-red-500 shrink-0" />
                 <span>Hotline: +880 1711-223344 (10 AM - 10 PM)</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <Mail className="w-3.5 h-3.5 text-red-500 shrink-0" />
                 <span>support@dhongfashion.com</span>
               </div>
             </div>
@@ -103,7 +109,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   onClick={() => toggleCategoryFilter('Party Gowns')}
-                  className="hover:text-amber-300 transition-colors"
+                  className="hover:text-red-400 transition-colors"
                 >
                   Party Gowns
                 </button>
@@ -111,7 +117,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   onClick={() => toggleCategoryFilter('Silk & Georgette')}
-                  className="hover:text-amber-300 transition-colors"
+                  className="hover:text-red-400 transition-colors"
                 >
                   Silk & Georgette
                 </button>
@@ -119,7 +125,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   onClick={() => toggleCategoryFilter('Festive Anarkalis')}
-                  className="hover:text-amber-300 transition-colors"
+                  className="hover:text-red-400 transition-colors"
                 >
                   Festive Anarkalis
                 </button>
@@ -127,7 +133,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   onClick={() => toggleCategoryFilter('Cocktail & Western')}
-                  className="hover:text-amber-300 transition-colors"
+                  className="hover:text-red-400 transition-colors"
                 >
                   Cocktail & Western
                 </button>
@@ -135,7 +141,7 @@ export const Footer: React.FC = () => {
               <li>
                 <button
                   onClick={() => toggleCategoryFilter('Casual Kurti Frocks')}
-                  className="hover:text-amber-300 transition-colors"
+                  className="hover:text-red-400 transition-colors"
                 >
                   Casual Kurti Frocks
                 </button>
@@ -166,7 +172,7 @@ export const Footer: React.FC = () => {
               Every dress passes our thorough master-tailor quality audit before being packed in our luxury dust protection bag.
             </p>
             <div className="p-3 rounded-xl bg-neutral-950 border border-neutral-800 text-[11px] text-neutral-300 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-red-500 shrink-0" />
               <span>100% Authentic Fabric & Quality Assurance</span>
             </div>
           </div>

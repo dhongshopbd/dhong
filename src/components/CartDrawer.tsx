@@ -30,7 +30,7 @@ export const CartDrawer: React.FC = () => {
             {/* Header */}
             <div className="p-5 border-b border-neutral-200 flex items-center justify-between bg-white">
               <div className="flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-amber-600" />
+                <ShoppingBag className="w-5 h-5 text-red-600" />
                 <h3 className="font-brand text-lg font-bold tracking-wider text-neutral-900">Your Shopping Bag</h3>
                 <span className="text-xs text-neutral-500 font-normal">
                   ({cart.reduce((sum, item) => sum + item.quantity, 0)} items)
@@ -47,13 +47,13 @@ export const CartDrawer: React.FC = () => {
             </div>
 
             {/* Free Shipping Progress Indicator (BDT) */}
-            <div className="px-5 py-3 bg-amber-50/60 border-b border-amber-100 text-xs">
+            <div className="px-5 py-3 bg-rose-50/70 border-b border-rose-100 text-xs">
               <div className="flex items-center justify-between text-neutral-800 mb-1.5 font-medium">
                 <span className="flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5 text-amber-700" />
+                  <Truck className="w-3.5 h-3.5 text-red-600" />
                   {amountNeeded > 0 ? (
                     <span>
-                      Add <strong className="text-amber-900">{formatBDT(amountNeeded)}</strong> more for <strong>FREE Delivery</strong> anywhere in Bangladesh!
+                      Add <strong className="text-red-700">{formatBDT(amountNeeded)}</strong> more for <strong>FREE Delivery</strong> anywhere in Bangladesh!
                     </span>
                   ) : (
                     <span className="text-emerald-700 font-bold">
@@ -62,9 +62,9 @@ export const CartDrawer: React.FC = () => {
                   )}
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-amber-200/60 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-neutral-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-amber-500 transition-all duration-300 rounded-full"
+                  className="h-full bg-[#e32117] transition-all duration-300 rounded-full"
                   style={{ width: `${progressToFreeShipping}%` }}
                 />
               </div>
@@ -175,7 +175,7 @@ export const CartDrawer: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-sm font-bold text-neutral-900 pt-2 border-t border-neutral-200">
                     <span>Subtotal Due</span>
-                    <span className="text-amber-800 text-base font-extrabold">
+                    <span className="text-red-700 text-base font-extrabold">
                       {formatBDT(subtotal)}
                     </span>
                   </div>
@@ -184,7 +184,7 @@ export const CartDrawer: React.FC = () => {
                 <button
                   id="cart-checkout-btn"
                   onClick={() => setIsCheckoutOpen(true)}
-                  className="w-full py-3.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md"
+                  className="w-full py-3.5 px-4 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md shadow-red-600/20"
                 >
                   <span>Checkout with Cash on Delivery / bKash</span>
                   <ArrowRight className="w-4 h-4" />

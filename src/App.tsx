@@ -37,7 +37,7 @@ const MainContent: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {filteredProducts.length === 0 ? (
           <div className="py-20 text-center space-y-4 max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 rounded-full bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto">
               <Sparkles className="w-7 h-7" />
             </div>
             <h3 className="font-brand text-xl font-bold text-neutral-900">
