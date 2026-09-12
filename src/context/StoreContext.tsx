@@ -116,37 +116,76 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Admin state
+  // Check if current URL indicates admin page (/admin, /admin/, #admin, ?admin)
+  const checkIsAdminRoute = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    const pathname = (window.location.pathname || '').toLowerCase();
+    const hash = (window.location.hash || '').toLowerCase();
+    const search = (window.location.search || '').toLowerCase();
+    
+    // Strip trailing slashes, e.g. '/admin/' -> '/admin'
+    const cleanPath = pathname.replace(/\/+$/, '');
+
+    return (
+      cleanPath === '/admin' ||
+      cleanPath.endsWith('/admin') ||
+      cleanPath.includes('/admin') ||
+      pathname.startsWith('/admin') ||
+      hash === '#admin' ||
+      hash === '#/admin' ||
+      hash.includes('admin') ||
+      search.includes('admin')
+    );
+  };
+
+  // Admin state - check both localStorage & sessionStorage
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
-    return sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true';
+    try {
+      return (
+        localStorage.getItem(ADMIN_AUTH_KEY) === 'true' ||
+        sessionStorage.getItem(ADMIN_AUTH_KEY) === 'true'
+      );
+    } catch {
+      return false;
+    }
   });
 
   const [currentView, setCurrentView] = useState<'store' | 'admin'>(() => {
-    const path = window.location.pathname.toLowerCase();
-    const hash = window.location.hash.toLowerCase();
-    if (path.endsWith('/admin') || path.includes('/admin') || hash === '#admin' || hash.includes('admin')) {
-      return 'admin';
-    }
-    return 'store';
+    return checkIsAdminRoute() ? 'admin' : 'store';
   });
 
-  // Listen for navigation changes (popstate & hashchange)
+  // Listen for navigation changes (popstate, hashchange, and URL changes)
   useEffect(() => {
     const handleUrlChange = () => {
-      const path = window.location.pathname.toLowerCase();
-      const hash = window.location.hash.toLowerCase();
-      if (path.endsWith('/admin') || path.includes('/admin') || hash === '#admin' || hash.includes('admin')) {
+      if (checkIsAdminRoute()) {
         setCurrentView('admin');
       } else {
         setCurrentView('store');
       }
     };
 
+    // Initial check on mount
+    handleUrlChange();
+
     window.addEventListener('popstate', handleUrlChange);
     window.addEventListener('hashchange', handleUrlChange);
+
+    // Watch for URL changes (e.g. manual history manipulation or in-page navigation)
+    const interval = setInterval(() => {
+      const isAdmin = checkIsAdminRoute();
+      setCurrentView((prev) => {
+        if (isAdmin && prev !== 'admin') return 'admin';
+        if (!isAdmin && prev === 'admin' && (window.location.pathname === '/' || window.location.pathname === '')) {
+          return 'store';
+        }
+        return prev;
+      });
+    }, 400);
+
     return () => {
       window.removeEventListener('popstate', handleUrlChange);
       window.removeEventListener('hashchange', handleUrlChange);
+      clearInterval(interval);
     };
   }, []);
 
@@ -356,7 +395,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const loginAdmin = (username: string, pass: string): boolean => {
     if (username.trim() === 'admin' && pass === 'dhongin') {
       setIsAdminLoggedIn(true);
-      sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+      try {
+        localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+        sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+      } catch {
+        // ignore
+      }
       return true;
     }
     return false;
@@ -364,7 +408,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
-    sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    try {
+      localStorage.removeItem(ADMIN_AUTH_KEY);
+      sessionStorage.removeItem(ADMIN_AUTH_KEY);
+    } catch {
+      // ignore
+    }
     handleSetCurrentView('store');
   };
 
