@@ -82,7 +82,7 @@ export const Footer: React.FC = () => {
               </div>
             </div>
             <p className="text-neutral-400 leading-relaxed font-light pr-6">
-              Dhong is Bangladesh’s premier designer dress house, handcrafting evening gowns, festive anarkalis, fluid mulberry silks, and contemporary cocktail frocks for discerning women across Dhaka, Chittagong, Sylhet, and all 64 districts.
+              <span className="text-red-400 font-medium">Come meet the new you.</span> Dhong is Bangladesh’s premier designer dress house, handcrafting evening gowns, festive anarkalis, fluid mulberry silks, and contemporary cocktail frocks for discerning women across Dhaka, Chittagong, Sylhet, and all 64 districts.
             </p>
             <div className="space-y-1.5 text-[11px] text-neutral-400 pt-1">
               <div className="flex items-center gap-2">

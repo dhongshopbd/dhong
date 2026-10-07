@@ -215,8 +215,8 @@ export const Header: React.FC = () => {
                 </span>
                 <span className="text-red-600 font-serif text-xl leading-none font-bold">.</span>
               </div>
-              <span className="text-[9px] sm:text-[10px] tracking-[0.24em] sm:tracking-[0.28em] uppercase text-neutral-400 font-light -mt-0.5 group-hover:text-neutral-300 transition-colors">
-                High Fashion & Dresses
+              <span className="text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.24em] uppercase text-red-400 font-semibold -mt-0.5 group-hover:text-red-300 transition-colors">
+                Come meet the new you
               </span>
             </div>
           </div>

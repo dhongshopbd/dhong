@@ -13,18 +13,18 @@ export const HeroBanner: React.FC = () => {
           <div className="lg:col-span-8 text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-red-700 text-xs font-semibold tracking-wider mb-3 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-red-600" />
-              <span>DHONG (ঢং) 2026 EID & LUXURY COUTURE</span>
+              <span>DHONG (ঢং) COUTURE • COME MEET THE NEW YOU</span>
             </div>
 
             <h1 className="font-brand text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-neutral-900 leading-[1.18] mb-3">
-              Elegance for Every Occasion. <br />
+              Come meet the new you. <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 via-rose-600 to-red-900">
-                Tailored for Bangladeshi Women.
+                Elegance Tailored for Bangladeshi Women.
               </span>
             </h1>
 
             <p className="text-neutral-600 text-sm sm:text-base max-w-2xl leading-relaxed mb-6 font-normal">
-              Explore Dhong’s signature party gowns, pure georgette silks, festive anarkalis, and ready-to-wear dresses. Fast Cash on Delivery (COD) across all 64 districts in Bangladesh with easy size exchange.
+              Come meet the new you with Dhong’s signature party gowns, pure georgette silks, festive anarkalis, and ready-to-wear luxury dresses. Fast Cash on Delivery (COD) across all 64 districts in Bangladesh with easy size exchange.
             </p>
 
             {/* Quick Filter Buttons */}

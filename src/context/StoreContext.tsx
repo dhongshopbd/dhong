@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Product, CartItem, CustomerOrder, FilterState, DressSize, SortOption } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_ORDERS } from '../data/initialProducts';
+import {
+  loadInitialProducts,
+  persistProducts,
+  loadInitialCategories,
+  persistCategories,
+  loadInitialOrders,
+  persistOrders,
+  resetDatabaseToDefaults,
+  idbGet,
+} from '../utils/db';
 
 interface StoreContextType {
   products: Product[];
@@ -34,6 +44,7 @@ interface StoreContextType {
   
   // Category management & direct selection
   addCategory: (categoryName: string) => boolean;
+  updateCategory: (oldName: string, newName: string) => boolean;
   deleteCategory: (categoryName: string) => void;
   selectCategoryOnly: (categoryName: string) => void;
   selectCategoryWithTag: (categoryName: string, tag?: string) => void;
@@ -86,33 +97,12 @@ const CATEGORIES_STORAGE_KEY = 'dhong_bd_categories_v2';
 const ADMIN_AUTH_KEY = 'dhong_admin_auth';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Products state with localStorage persistence
-  const [products, setProducts] = useState<Product[]>(() => {
-    try {
-      const saved = localStorage.getItem(PRODUCTS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return INITIAL_PRODUCTS;
-  });
+  // Products state with dual persistence
+  const [products, setProducts] = useState<Product[]>(loadInitialProducts);
 
-  // Custom Categories state (persisted so any added category sticks automatically)
-  const [customCategories, setCustomCategories] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  });
+  // Categories state with dual persistence
+  const [categories, setCategories] = useState<string[]>(loadInitialCategories);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
 
   // Cart state
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -125,19 +115,27 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return [];
   });
 
-  // Orders state - includes realistic Bangladesh sample orders across all statuses if fresh
-  const [orders, setOrders] = useState<CustomerOrder[]>(() => {
-    try {
-      const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  // Orders state with dual persistence
+  const [orders, setOrders] = useState<CustomerOrder[]>(loadInitialOrders);
+
+  // Deep hydration from IndexedDB on startup
+  useEffect(() => {
+    idbGet<Product[]>('dhong_products_v3').then((idbProds) => {
+      if (Array.isArray(idbProds) && idbProds.length > 0) {
+        setProducts(idbProds);
       }
-    } catch {
-      // ignore
-    }
-    return INITIAL_ORDERS;
-  });
+    });
+    idbGet<string[]>('dhong_categories_v3').then((idbCats) => {
+      if (Array.isArray(idbCats) && idbCats.length > 0) {
+        setCategories(idbCats);
+      }
+    });
+    idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
+      if (Array.isArray(idbOrders) && idbOrders.length > 0) {
+        setOrders(idbOrders);
+      }
+    });
+  }, []);
 
   // Filters state
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
@@ -217,50 +215,69 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Save products when changed
+  // Auto-persist changes to both IndexedDB and LocalStorage
   useEffect(() => {
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(products));
+    persistProducts(products);
   }, [products]);
 
-  // Save cart when changed
+  useEffect(() => {
+    persistCategories(categories);
+  }, [categories]);
+
+  useEffect(() => {
+    persistOrders(orders);
+  }, [orders]);
+
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
-
-  // Save orders when changed
-  useEffect(() => {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-  }, [orders]);
-
-  // Save custom categories when changed
-  useEffect(() => {
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(customCategories));
-  }, [customCategories]);
-
-  // Dynamic list of categories from initial list + custom categories + products
-  const categories = React.useMemo(() => {
-    const set = new Set<string>(INITIAL_CATEGORIES);
-    customCategories.forEach((c) => {
-      if (c && c.trim()) set.add(c.trim());
-    });
-    products.forEach((p) => {
-      if (p.category && p.category.trim()) set.add(p.category.trim());
-    });
-    return Array.from(set);
-  }, [products, customCategories]);
 
   // Category management & direct selection
   const addCategory = (categoryName: string): boolean => {
     const trimmed = categoryName.trim();
     if (!trimmed) return false;
-    if (!categories.includes(trimmed)) {
-      setCustomCategories((prev) => [...prev, trimmed]);
+    if (!categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      const next = [...categories, trimmed];
+      setCategories(next);
+      persistCategories(next);
+      return true;
     }
+    return false;
+  };
+
+  const updateCategory = (oldName: string, newName: string): boolean => {
+    const trimmedNew = newName.trim();
+    if (!trimmedNew || oldName === trimmedNew) return false;
+    const nextCats = categories.map((c) => (c === oldName ? trimmedNew : c));
+    setCategories(nextCats);
+    persistCategories(nextCats);
+
+    const nextProds = products.map((p) =>
+      p.category === oldName ? { ...p, category: trimmedNew } : p
+    );
+    setProducts(nextProds);
+    persistProducts(nextProds);
+
+    setFilters((prev) => ({
+      ...prev,
+      selectedCategories: prev.selectedCategories.map((c) => (c === oldName ? trimmedNew : c)),
+    }));
     return true;
   };
 
   const deleteCategory = (categoryName: string) => {
-    setCustomCategories((prev) => prev.filter((c) => c !== categoryName));
+    const nextCats = categories.filter((c) => c !== categoryName);
+    setCategories(nextCats);
+    persistCategories(nextCats);
+
+    // Reassign any products in the deleted category to the first remaining category
+    const fallbackCategory = nextCats[0] || 'Dhong Haute Couture';
+    const nextProds = products.map((p) =>
+      p.category === categoryName ? { ...p, category: fallbackCategory } : p
+    );
+    setProducts(nextProds);
+    persistProducts(nextProds);
+
     setFilters((prev) => ({
       ...prev,
       selectedCategories: prev.selectedCategories.filter((c) => c !== categoryName),
@@ -499,8 +516,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Product management (Upload, Edit, Delete)
   const addProduct = (productData: Omit<Product, 'id' | 'createdAt'>): Product => {
-    if (productData.category && !categories.includes(productData.category.trim())) {
-      addCategory(productData.category.trim());
+    const cat = productData.category.trim();
+    if (cat && !categories.some((c) => c.toLowerCase() === cat.toLowerCase())) {
+      addCategory(cat);
     }
     const newProduct: Product = {
       ...productData,
@@ -508,31 +526,44 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: new Date().toISOString(),
       sku: productData.sku || `DH-${Date.now().toString().slice(-4)}`,
     };
-    setProducts((prev) => [newProduct, ...prev]);
+    const nextProds = [newProduct, ...products];
+    setProducts(nextProds);
+    persistProducts(nextProds);
     return newProduct;
   };
 
   const updateProduct = (id: string, updates: Partial<Product>) => {
-    if (updates.category && !categories.includes(updates.category.trim())) {
-      addCategory(updates.category.trim());
+    if (updates.category) {
+      const cat = updates.category.trim();
+      if (cat && !categories.some((c) => c.toLowerCase() === cat.toLowerCase())) {
+        addCategory(cat);
+      }
     }
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...updates } : p))
-    );
+    const nextProds = products.map((p) => (p.id === id ? { ...p, ...updates } : p));
+    setProducts(nextProds);
+    persistProducts(nextProds);
   };
 
   const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    const nextProds = products.filter((p) => p.id !== id);
+    setProducts(nextProds);
+    persistProducts(nextProds);
+    setCart((prev) => prev.filter((item) => item.product.id !== id));
+    if (selectedProduct?.id === id) {
+      setSelectedProduct(null);
+    }
   };
 
   const updateOrderStatus = (orderId: string, status: CustomerOrder['status']) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status } : o))
-    );
+    const next = orders.map((o) => (o.id === orderId ? { ...o, status } : o));
+    setOrders(next);
+    persistOrders(next);
   };
 
   const deleteOrder = (orderId: string) => {
-    setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    const next = orders.filter((o) => o.id !== orderId);
+    setOrders(next);
+    persistOrders(next);
   };
 
   const addManualOrder = (orderData: Omit<CustomerOrder, 'id' | 'createdAt'>): CustomerOrder => {
@@ -541,18 +572,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: 'DH-BD-' + Math.floor(100000 + Math.random() * 900000),
       createdAt: new Date().toISOString(),
     };
-    setOrders((prev) => [newOrder, ...prev]);
+    const next = [newOrder, ...orders];
+    setOrders(next);
+    persistOrders(next);
     return newOrder;
   };
 
-  const resetOrdersToSample = () => {
+  const resetOrdersToSample = async () => {
     setOrders(INITIAL_ORDERS);
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
+    await persistOrders(INITIAL_ORDERS);
   };
 
-  const resetToSampleProducts = () => {
-    setProducts(INITIAL_PRODUCTS);
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(INITIAL_PRODUCTS));
+  const resetToSampleProducts = async () => {
+    const res = await resetDatabaseToDefaults();
+    setProducts(res.products);
+    setCategories(res.categories);
+    setOrders(res.orders);
   };
 
   // Computed filtered & sorted products with tick mark multi-selection
@@ -664,6 +699,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         clearCart,
         placeOrder,
         addCategory,
+        updateCategory,
         deleteCategory,
         selectCategoryOnly,
         selectCategoryWithTag,
