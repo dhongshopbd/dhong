@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, CartItem, CustomerOrder, FilterState, DressSize, SortOption } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_ORDERS } from '../data/initialProducts';
+import { Product, CartItem, CustomerOrder, FilterState, DressSize, SortOption, Invoice } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_ORDERS, INITIAL_INVOICES } from '../data/initialProducts';
 import {
   loadInitialProducts,
   persistProducts,
@@ -8,6 +8,8 @@ import {
   persistCategories,
   loadInitialOrders,
   persistOrders,
+  loadInitialInvoices,
+  persistInvoices,
   resetDatabaseToDefaults,
   idbGet,
 } from '../utils/db';
@@ -18,6 +20,7 @@ interface StoreContextType {
   customCategories: string[];
   cart: CartItem[];
   orders: CustomerOrder[];
+  invoices: Invoice[];
   filters: FilterState;
   selectedProduct: Product | null;
   isCartOpen: boolean;
@@ -42,6 +45,15 @@ interface StoreContextType {
     paymentMethod: 'Cash on Delivery (COD)' | 'bKash / Nagad' | 'Debit/Credit Card';
   }) => CustomerOrder;
   
+  // Invoice & Order Confirmation Management (Only save invoice upon order confirmation!)
+  confirmOrderAndCreateInvoice: (orderId: string) => { order: CustomerOrder; invoice: Invoice } | null;
+  updateInvoice: (invoiceId: string, updates: Partial<Invoice>) => void;
+  deleteInvoice: (invoiceId: string) => void;
+  markInvoiceSent: (invoiceId: string, channel: 'whatsapp' | 'email') => void;
+  markOrderNumberSent: (orderId: string, channel: 'whatsapp' | 'email') => void;
+  getInvoiceByOrderId: (orderId: string) => Invoice | undefined;
+  getInvoiceById: (invoiceId: string) => Invoice | undefined;
+
   // Category management & direct selection
   addCategory: (categoryName: string) => boolean;
   updateCategory: (oldName: string, newName: string) => boolean;
@@ -118,6 +130,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Orders state with dual persistence
   const [orders, setOrders] = useState<CustomerOrder[]>(loadInitialOrders);
 
+  // Invoices state with dual persistence (Only generated and saved upon order confirmation)
+  const [invoices, setInvoices] = useState<Invoice[]>(loadInitialInvoices);
+
   // Deep hydration from IndexedDB on startup
   useEffect(() => {
     idbGet<Product[]>('dhong_products_v3').then((idbProds) => {
@@ -133,6 +148,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
       if (Array.isArray(idbOrders) && idbOrders.length > 0) {
         setOrders(idbOrders);
+      }
+    });
+    idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
+      if (Array.isArray(idbInvoices) && idbInvoices.length > 0) {
+        setInvoices(idbInvoices);
       }
     });
   }, []);
@@ -395,7 +415,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       paymentMethod: customerData.paymentMethod,
     };
 
-    setOrders((prev) => [newOrder, ...prev]);
+    const nextOrders = [newOrder, ...orders];
+    setOrders(nextOrders);
+    persistOrders(nextOrders);
     clearCart();
     return newOrder;
   };
@@ -554,16 +576,150 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // --- INVOICE MANAGEMENT (Only created and saved upon order confirmation!) ---
+  const confirmOrderAndCreateInvoice = (orderId: string): { order: CustomerOrder; invoice: Invoice } | null => {
+    const targetOrder = orders.find((o) => o.id === orderId);
+    if (!targetOrder) return null;
+
+    let invoice = invoices.find((inv) => inv.orderId === orderId);
+    const nowIso = new Date().toISOString();
+
+    if (!invoice) {
+      // Generate clean unique invoice number, e.g. INV-2026-8942
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const invoiceNum = `INV-${new Date().getFullYear()}-${randomSuffix}`;
+
+      invoice = {
+        id: invoiceNum,
+        orderId: targetOrder.id,
+        createdAt: nowIso,
+        orderDate: targetOrder.createdAt,
+        customerName: targetOrder.customerName,
+        email: targetOrder.email,
+        phone: targetOrder.phone,
+        address: targetOrder.address,
+        city: targetOrder.city,
+        items: targetOrder.items,
+        subtotal: targetOrder.subtotal,
+        shipping: targetOrder.shipping,
+        total: targetOrder.total,
+        status: 'Confirmed',
+        paymentMethod: targetOrder.paymentMethod,
+        courier: targetOrder.courier || 'Steadfast Courier',
+        trackingCode: targetOrder.trackingCode,
+        notes: targetOrder.notes,
+      };
+    } else {
+      invoice = {
+        ...invoice,
+        status: 'Confirmed',
+      };
+    }
+
+    const updatedInvoices = [invoice, ...invoices.filter((inv) => inv.id !== invoice!.id && inv.orderId !== orderId)];
+    setInvoices(updatedInvoices);
+    persistInvoices(updatedInvoices);
+
+    const updatedOrder: CustomerOrder = {
+      ...targetOrder,
+      status: 'Confirmed',
+      invoiceId: invoice.id,
+      invoiceSavedAt: nowIso,
+    };
+    const updatedOrders = orders.map((o) => (o.id === orderId ? updatedOrder : o));
+    setOrders(updatedOrders);
+    persistOrders(updatedOrders);
+
+    return { order: updatedOrder, invoice };
+  };
+
+  const updateInvoice = (invoiceId: string, updates: Partial<Invoice>) => {
+    const nextInvs = invoices.map((inv) => (inv.id === invoiceId ? { ...inv, ...updates } : inv));
+    setInvoices(nextInvs);
+    persistInvoices(nextInvs);
+  };
+
+  const deleteInvoice = (invoiceId: string) => {
+    const target = invoices.find((inv) => inv.id === invoiceId);
+    const nextInvs = invoices.filter((inv) => inv.id !== invoiceId);
+    setInvoices(nextInvs);
+    persistInvoices(nextInvs);
+
+    // If order was pointing to this invoice, clear invoiceId
+    if (target?.orderId) {
+      const nextOrders = orders.map((o) => (o.id === target.orderId ? { ...o, invoiceId: undefined } : o));
+      setOrders(nextOrders);
+      persistOrders(nextOrders);
+    }
+  };
+
+  const markInvoiceSent = (invoiceId: string, channel: 'whatsapp' | 'email') => {
+    const nowIso = new Date().toISOString();
+    const nextInvs = invoices.map((inv) => {
+      if (inv.id === invoiceId) {
+        return {
+          ...inv,
+          ...(channel === 'whatsapp' ? { whatsappSentAt: nowIso } : { emailSentAt: nowIso }),
+        };
+      }
+      return inv;
+    });
+    setInvoices(nextInvs);
+    persistInvoices(nextInvs);
+  };
+
+  const markOrderNumberSent = (orderId: string, channel: 'whatsapp' | 'email') => {
+    const nowIso = new Date().toISOString();
+    const nextOrders = orders.map((o) => {
+      if (o.id === orderId) {
+        return {
+          ...o,
+          ...(channel === 'whatsapp' ? { orderNumberSentAt: nowIso } : { orderNumberSentAt: nowIso }),
+        };
+      }
+      return o;
+    });
+    setOrders(nextOrders);
+    persistOrders(nextOrders);
+  };
+
+  const getInvoiceByOrderId = (orderId: string): Invoice | undefined => {
+    return invoices.find((inv) => inv.orderId === orderId);
+  };
+
+  const getInvoiceById = (invoiceId: string): Invoice | undefined => {
+    return invoices.find((inv) => inv.id.toLowerCase() === invoiceId.toLowerCase());
+  };
+
   const updateOrderStatus = (orderId: string, status: CustomerOrder['status']) => {
+    if (status === 'Confirmed') {
+      confirmOrderAndCreateInvoice(orderId);
+      return;
+    }
+
     const next = orders.map((o) => (o.id === orderId ? { ...o, status } : o));
     setOrders(next);
     persistOrders(next);
+
+    // Sync invoice status if one already exists
+    const matchingInvoice = invoices.find((inv) => inv.orderId === orderId);
+    if (matchingInvoice && status !== 'Pending') {
+      const updatedInv: Invoice = { ...matchingInvoice, status };
+      const nextInvs = invoices.map((inv) => (inv.orderId === orderId ? updatedInv : inv));
+      setInvoices(nextInvs);
+      persistInvoices(nextInvs);
+    }
   };
 
   const deleteOrder = (orderId: string) => {
     const next = orders.filter((o) => o.id !== orderId);
     setOrders(next);
     persistOrders(next);
+
+    // Also remove associated invoice
+    const nextInvs = invoices.filter((inv) => inv.orderId !== orderId);
+    setInvoices(nextInvs);
+    persistInvoices(nextInvs);
   };
 
   const addManualOrder = (orderData: Omit<CustomerOrder, 'id' | 'createdAt'>): CustomerOrder => {
@@ -575,12 +731,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const next = [newOrder, ...orders];
     setOrders(next);
     persistOrders(next);
+
+    // If manual order is created as Confirmed, generate invoice immediately
+    if (newOrder.status === 'Confirmed') {
+      setTimeout(() => {
+        confirmOrderAndCreateInvoice(newOrder.id);
+      }, 0);
+    }
+
     return newOrder;
   };
 
   const resetOrdersToSample = async () => {
     setOrders(INITIAL_ORDERS);
+    setInvoices(INITIAL_INVOICES);
     await persistOrders(INITIAL_ORDERS);
+    await persistInvoices(INITIAL_INVOICES);
   };
 
   const resetToSampleProducts = async () => {
@@ -588,6 +754,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setProducts(res.products);
     setCategories(res.categories);
     setOrders(res.orders);
+    setInvoices(res.invoices);
   };
 
   // Computed filtered & sorted products with tick mark multi-selection
@@ -684,6 +851,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         customCategories,
         cart,
         orders,
+        invoices,
         filters,
         selectedProduct,
         isCartOpen,
@@ -698,6 +866,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updateCartQuantity,
         clearCart,
         placeOrder,
+        confirmOrderAndCreateInvoice,
+        updateInvoice,
+        deleteInvoice,
+        markInvoiceSent,
+        markOrderNumberSent,
+        getInvoiceByOrderId,
+        getInvoiceById,
         addCategory,
         updateCategory,
         deleteCategory,

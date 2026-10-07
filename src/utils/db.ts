@@ -1,8 +1,8 @@
 // Persistent Database Service for Dhong Bangladesh (Dual IndexedDB + LocalStorage)
 // Guarantees that all products, categories, orders, and edits are permanently saved and never lost.
 
-import { Product, CustomerOrder } from '../types';
-import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_ORDERS } from '../data/initialProducts';
+import { Product, CustomerOrder, Invoice } from '../types';
+import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_ORDERS, INITIAL_INVOICES } from '../data/initialProducts';
 
 const DB_NAME = 'dhong_ecommerce_db_v3';
 const DB_VERSION = 1;
@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   PRODUCTS: 'dhong_products_v3',
   CATEGORIES: 'dhong_categories_v3',
   ORDERS: 'dhong_orders_v3',
+  INVOICES: 'dhong_invoices_v3',
   CATEGORY_META: 'dhong_category_meta_v3',
 };
 
@@ -171,27 +172,75 @@ export async function persistOrders(orders: CustomerOrder[]): Promise<void> {
   await idbSet(STORAGE_KEYS.ORDERS, orders);
 }
 
+// --- INVOICES REPOSITORY (Only saved after order is confirmed!) ---
+export function loadInitialInvoices(): Invoice[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.INVOICES);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('LocalStorage invoices read error:', err);
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(INITIAL_INVOICES));
+  } catch {}
+  return INITIAL_INVOICES;
+}
+
+export async function persistInvoices(invoices: Invoice[]): Promise<void> {
+  try {
+    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(invoices));
+  } catch (err) {
+    console.warn('LocalStorage invoices save error:', err);
+  }
+
+  await idbSet(STORAGE_KEYS.INVOICES, invoices);
+}
+
+export async function saveInvoice(invoice: Invoice): Promise<Invoice[]> {
+  const current = loadInitialInvoices();
+  const existsIndex = current.findIndex((i) => i.id === invoice.id || i.orderId === invoice.orderId);
+  let updated: Invoice[];
+  if (existsIndex >= 0) {
+    updated = [...current];
+    updated[existsIndex] = invoice;
+  } else {
+    updated = [invoice, ...current];
+  }
+  await persistInvoices(updated);
+  return updated;
+}
+
 // --- RESET DATABASE TO DEFAULT FACTORY SAMPLE ---
 export async function resetDatabaseToDefaults(): Promise<{
   products: Product[];
   categories: string[];
   orders: CustomerOrder[];
+  invoices: Invoice[];
 }> {
   try {
     localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
+    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(INITIAL_INVOICES));
   } catch {}
 
   await idbSet(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
   await idbSet(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
   await idbSet(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+  await idbSet(STORAGE_KEYS.INVOICES, INITIAL_INVOICES);
   await idbSet(STORAGE_KEYS.INITIALIZED, true);
 
   return {
     products: INITIAL_PRODUCTS,
     categories: INITIAL_CATEGORIES,
     orders: INITIAL_ORDERS,
+    invoices: INITIAL_INVOICES,
   };
 }

@@ -20,16 +20,19 @@ import {
   AlertTriangle,
   Sparkles,
   Tag,
+  FileText,
 } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
 import { OrdersManager } from './admin/OrdersManager';
 import { CategoriesManager } from './admin/CategoriesManager';
+import { InvoicesManager } from './admin/InvoicesManager';
 
 export const AdminPanel: React.FC = () => {
   const {
     products,
     categories,
     orders,
+    invoices,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -38,7 +41,7 @@ export const AdminPanel: React.FC = () => {
     resetToSampleProducts,
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'categories' | 'metrics'>('products');
+  const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'invoices' | 'categories' | 'metrics'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
@@ -291,6 +294,18 @@ export const AdminPanel: React.FC = () => {
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Customer Orders ({orders.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('invoices')}
+              className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'invoices'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Saved Invoices ({invoices.length})</span>
             </button>
 
             <button
@@ -719,6 +734,9 @@ export const AdminPanel: React.FC = () => {
 
         {/* TAB 3: MASTER CUSTOMER ORDERS MANAGEMENT */}
         {activeTab === 'orders' && <OrdersManager />}
+
+        {/* TAB: SAVED INVOICES & SEARCHABLE BILLING DATABASE */}
+        {activeTab === 'invoices' && <InvoicesManager />}
 
         {/* TAB 4: DYNAMIC CATEGORIES MANAGEMENT */}
         {activeTab === 'categories' && <CategoriesManager />}

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
-import { CustomerOrder, DressSize } from '../../types';
+import { CustomerOrder, DressSize, Invoice } from '../../types';
 import { formatBDT } from '../../utils/currency';
+import { triggerOrderNumberNotification, triggerInvoiceNumberNotification } from '../../utils/notifications';
 import { OrderInvoiceModal } from './OrderInvoiceModal';
 import {
   ShoppingBag,
@@ -24,16 +25,26 @@ import {
   MapPin,
   Calendar,
   CreditCard,
+  Mail,
+  Send,
+  Sparkles,
+  Check,
+  Copy,
 } from 'lucide-react';
 
 export const OrdersManager: React.FC = () => {
   const {
     orders,
+    invoices,
     updateOrderStatus,
+    confirmOrderAndCreateInvoice,
     deleteOrder,
     addManualOrder,
     resetOrdersToSample,
     products,
+    getInvoiceByOrderId,
+    markInvoiceSent,
+    markOrderNumberSent,
   } = useStore();
 
   const [statusFilter, setStatusFilter] = useState<'ALL' | CustomerOrder['status']>('ALL');
@@ -41,6 +52,15 @@ export const OrdersManager: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<CustomerOrder | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<CustomerOrder | null>(null);
+  const [confirmedSuccessModal, setConfirmedSuccessModal] = useState<{ order: CustomerOrder; invoice: Invoice } | null>(null);
+  const [pendingInvoiceNotice, setPendingInvoiceNotice] = useState<CustomerOrder | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setActionNotice(msg);
+    setTimeout(() => setActionNotice(null), 4000);
+  };
 
   // Manual Order Form State
   const [manualName, setManualName] = useState('');
@@ -428,52 +448,93 @@ export const OrdersManager: React.FC = () => {
                       })}
                     </span>
                     {getStatusBadge(order.status)}
+
+                    {/* Invoice ID badge if confirmed */}
+                    {order.invoiceId ? (
+                      <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-red-950/60 text-red-300 border border-red-500/40 font-bold flex items-center gap-1">
+                        <FileText className="w-3 h-3 text-red-400" />
+                        <span>{order.invoiceId}</span>
+                      </span>
+                    ) : (
+                      order.status === 'Pending' && (
+                        <span className="text-[10px] text-amber-400/90 italic">
+                          (Invoice pending confirmation)
+                        </span>
+                      )
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                    {/* Status Update Selector */}
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] text-neutral-400">Update:</span>
-                      <select
-                        value={order.status}
-                        onChange={(e) =>
-                          updateOrderStatus(order.id, e.target.value as CustomerOrder['status'])
-                        }
-                        className="bg-neutral-950 border border-neutral-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-neutral-200 focus:outline-none focus:border-red-500"
+                    {/* If Pending: Prominent Confirm & Save Invoice Button */}
+                    {order.status === 'Pending' ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const res = confirmOrderAndCreateInvoice(order.id);
+                          if (res) {
+                            setConfirmedSuccessModal(res);
+                            showToast(`Order ${order.id} confirmed! Invoice ${res.invoice.id} saved to database.`);
+                          }
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950 transition-all cursor-pointer"
+                        title="Confirm order and generate official invoice"
                       >
-                        <option value="Pending">Pending</option>
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Delivered">Delivered</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
-                    </div>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Confirm & Save Invoice</span>
+                      </button>
+                    ) : (
+                      /* Status Update Selector for Confirmed/Shipped/Delivered */
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-neutral-400">Update:</span>
+                        <select
+                          value={order.status}
+                          onChange={(e) =>
+                            updateOrderStatus(order.id, e.target.value as CustomerOrder['status'])
+                          }
+                          className="bg-neutral-950 border border-neutral-700 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-neutral-200 focus:outline-none focus:border-red-500"
+                        >
+                          <option value="Confirmed">Confirmed</option>
+                          <option value="Shipped">Shipped</option>
+                          <option value="Delivered">Delivered</option>
+                          <option value="Cancelled">Cancelled</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                      </div>
+                    )}
 
                     {/* Total */}
                     <div className="font-brand font-bold text-base text-red-400 px-3 py-1 rounded-lg bg-neutral-950 border border-neutral-800">
                       {formatBDT(order.total)}
                     </div>
 
-                    {/* Invoice Button */}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedInvoiceOrder(order)}
-                      className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs flex items-center gap-1.5 transition-colors"
-                      title="View and print invoice"
-                    >
-                      <Printer className="w-3.5 h-3.5 text-red-400" />
-                      <span className="hidden sm:inline">Invoice</span>
-                    </button>
-
-                    {/* Delete Order Button */}
+                    {/* Invoice Button (Only saved after order is confirmed) */}
                     <button
                       type="button"
                       onClick={() => {
-                        if (confirm(`Delete order ${order.id}? This action cannot be undone.`)) {
-                          deleteOrder(order.id);
+                        if (order.status === 'Pending') {
+                          setPendingInvoiceNotice(order);
+                        } else {
+                          setSelectedInvoiceOrder(order);
                         }
                       }}
-                      className="p-1.5 rounded-lg bg-neutral-950 hover:bg-rose-950/80 text-neutral-500 hover:text-rose-400 border border-neutral-800 transition-colors"
+                      className={`p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${
+                        order.status === 'Pending'
+                          ? 'bg-neutral-950 text-neutral-400 hover:text-amber-300 border border-neutral-800'
+                          : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'
+                      }`}
+                      title={order.status === 'Pending' ? 'Invoice will be saved after confirmation' : 'View and print saved invoice'}
+                    >
+                      <Printer className="w-3.5 h-3.5 text-red-400" />
+                      <span className="hidden sm:inline">
+                        {order.status === 'Pending' ? 'Invoice (Pending)' : 'Invoice'}
+                      </span>
+                    </button>
+
+                    {/* Delete Order Button (Clean Modal) */}
+                    <button
+                      type="button"
+                      onClick={() => setOrderToDelete(order)}
+                      className="p-1.5 rounded-lg bg-neutral-950 hover:bg-rose-950/80 text-neutral-500 hover:text-rose-400 border border-neutral-800 transition-colors cursor-pointer"
                       title="Delete this order"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -486,9 +547,10 @@ export const OrdersManager: React.FC = () => {
                   {/* Customer Info */}
                   <div>
                     <div className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 mb-1">
-                      Customer Info
+                      Customer Info & Dispatches
                     </div>
                     <div className="font-semibold text-neutral-200 text-sm">{order.customerName}</div>
+                    
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <a
                         href={`tel:${order.phone}`}
@@ -497,15 +559,82 @@ export const OrdersManager: React.FC = () => {
                         <Phone className="w-3 h-3" />
                         {order.phone}
                       </a>
-                      <a
-                        href={`https://wa.me/${waPhone}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 hover:bg-emerald-900 text-[11px]"
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                        WhatsApp
-                      </a>
+
+                      {/* WhatsApp Dispatches */}
+                      {order.invoiceId ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const inv = getInvoiceByOrderId(order.id);
+                            if (inv) {
+                              markInvoiceSent(inv.id, 'whatsapp');
+                              const notif = triggerInvoiceNumberNotification(inv);
+                              showToast(`Invoice ${inv.id} dispatched via WhatsApp to ${order.phone}`);
+                              window.open(notif.whatsappUrl, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 hover:bg-emerald-900 border border-emerald-800/60 text-[11px] font-medium cursor-pointer"
+                          title="Send official Invoice Number to WhatsApp"
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          <span>WhatsApp Invoice #</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            markOrderNumberSent(order.id, 'whatsapp');
+                            const notif = triggerOrderNumberNotification(order);
+                            showToast(`Order Number ${order.id} sent via WhatsApp to ${order.phone}`);
+                            window.open(notif.whatsappUrl, '_blank', 'noopener,noreferrer');
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-emerald-400 text-[11px] font-medium cursor-pointer"
+                          title="Send Order Number to customer via WhatsApp"
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          <span>WhatsApp Order #</span>
+                        </button>
+                      )}
+
+                      {/* Gmail Dispatches */}
+                      {order.email && (
+                        order.invoiceId ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const inv = getInvoiceByOrderId(order.id);
+                              if (inv) {
+                                markInvoiceSent(inv.id, 'email');
+                                const notif = triggerInvoiceNumberNotification(inv);
+                                showToast(`Invoice ${inv.id} sent via Gmail to ${order.email}`);
+                                const targetUrl = notif.gmailUrl || notif.mailtoUrl;
+                                if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-950 text-red-300 hover:bg-red-900 border border-red-800/60 text-[11px] font-medium cursor-pointer"
+                            title="Send Invoice Number to Gmail"
+                          >
+                            <Mail className="w-3 h-3" />
+                            <span>Gmail Invoice #</span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              markOrderNumberSent(order.id, 'email');
+                              const notif = triggerOrderNumberNotification(order);
+                              showToast(`Order Number ${order.id} sent via Gmail to ${order.email}`);
+                              const targetUrl = notif.gmailUrl || notif.mailtoUrl;
+                              if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-red-400 text-[11px] font-medium cursor-pointer"
+                            title="Send Order Number via Gmail"
+                          >
+                            <Mail className="w-3 h-3" />
+                            <span>Gmail Order #</span>
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
 
@@ -777,12 +906,231 @@ export const OrdersManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold uppercase tracking-wider shadow-md shadow-red-600/20"
+                  className="px-5 py-2 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold uppercase tracking-wider shadow-md shadow-red-600/20 cursor-pointer"
                 >
                   Save & Log Order
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 1. View & Print Invoice Modal */}
+      {selectedInvoiceOrder && (
+        <OrderInvoiceModal
+          order={selectedInvoiceOrder}
+          onClose={() => setSelectedInvoiceOrder(null)}
+        />
+      )}
+
+      {/* 2. Order Confirmed & Invoice Generated Success Modal */}
+      {confirmedSuccessModal && (() => {
+        const { order, invoice } = confirmedSuccessModal;
+        const notif = triggerInvoiceNumberNotification(invoice);
+        return (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn text-neutral-900">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-5 shadow-2xl border border-neutral-200">
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-brand text-lg font-bold text-neutral-900">Order Confirmed & Invoice Saved!</h3>
+                    <p className="text-xs text-neutral-500">Permanently saved to database</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setConfirmedSuccessModal(null)}
+                  className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Invoice & Order Number Badge */}
+              <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between items-center pb-2 border-b border-neutral-200">
+                  <span className="text-neutral-500 uppercase tracking-wider text-[10px] font-bold">Assigned Invoice Number:</span>
+                  <span className="font-mono font-bold text-sm text-red-600 px-2.5 py-0.5 rounded bg-red-50 border border-red-200">
+                    {invoice.id}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Referenced Order ID:</span>
+                  <span className="font-mono text-neutral-900 font-bold">{order.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Customer:</span>
+                  <span className="text-neutral-900 font-semibold">{order.customerName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Customer Phone:</span>
+                  <span className="text-neutral-900 font-mono font-medium">{order.phone}</span>
+                </div>
+                {order.email && (
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">Customer Gmail:</span>
+                    <span className="text-neutral-900 font-medium">{order.email}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1 border-t border-neutral-200 font-bold">
+                  <span>Total Amount:</span>
+                  <span className="text-red-600">{formatBDT(invoice.total)}</span>
+                </div>
+              </div>
+
+              {/* Automatic Dispatch Buttons */}
+              <div className="space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5 text-red-600" />
+                  <span>Send Invoice Number to Customer (Step 2)</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => {
+                      markInvoiceSent(invoice.id, 'whatsapp');
+                      showToast(`Invoice ${invoice.id} dispatched to WhatsApp (${order.phone})`);
+                      window.open(notif.whatsappUrl, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Send via WhatsApp</span>
+                  </button>
+
+                  {order.email ? (
+                    <button
+                      onClick={() => {
+                        markInvoiceSent(invoice.id, 'email');
+                        showToast(`Invoice ${invoice.id} prepared for Gmail (${order.email})`);
+                        const targetUrl = notif.gmailUrl || notif.mailtoUrl;
+                        if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>Send via Gmail</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-center px-3 py-2 rounded-xl bg-neutral-100 text-neutral-400 text-xs italic">
+                      No Email Provided
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom Actions */}
+              <div className="flex justify-between items-center pt-3 border-t border-neutral-200 text-xs">
+                <button
+                  onClick={() => {
+                    setSelectedInvoiceOrder(order);
+                    setConfirmedSuccessModal(null);
+                  }}
+                  className="text-red-600 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Preview Full Printable Invoice</span>
+                </button>
+                <button
+                  onClick={() => setConfirmedSuccessModal(null)}
+                  className="px-4 py-2 rounded-xl bg-neutral-900 text-white font-bold cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 3. Pending Invoice Policy Notice Modal */}
+      {pendingInvoiceNotice && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn text-neutral-900">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-neutral-200">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-brand text-lg font-bold text-neutral-900">Invoice Pending Confirmation</h3>
+                <p className="text-xs text-neutral-500">Order ID: {pendingInvoiceNotice.id}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-700 leading-relaxed">
+              Per your store policy: <strong>"Only save invoice after I confirm an order"</strong>. This order is currently <em>Pending</em> and has not yet been confirmed, so no invoice has been created in the database.
+            </p>
+
+            <p className="text-xs text-neutral-600 bg-neutral-50 p-3 rounded-xl border border-neutral-200">
+              Confirming the order will generate an official invoice number (e.g. <code>INV-2026-XXXX</code>), save it permanently to the database, and allow automatic dispatch to the customer's WhatsApp and Gmail.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setPendingInvoiceNotice(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  const target = pendingInvoiceNotice;
+                  setPendingInvoiceNotice(null);
+                  const res = confirmOrderAndCreateInvoice(target.id);
+                  if (res) {
+                    setConfirmedSuccessModal(res);
+                    showToast(`Order ${target.id} confirmed! Invoice ${res.invoice.id} saved.`);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Confirm & Save Invoice Now</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Delete Order Confirmation Modal (Safe inline dialog) */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-500">
+              <div className="w-10 h-10 rounded-full bg-rose-950/60 border border-rose-500/40 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="font-brand text-lg font-bold text-neutral-100">Delete Customer Order?</h3>
+                <p className="text-xs text-neutral-400">Order ID: {orderToDelete.id}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-300 leading-relaxed">
+              Are you sure you want to delete order <strong className="text-red-400 font-mono">{orderToDelete.id}</strong> for <strong>{orderToDelete.customerName}</strong>? This action cannot be undone and will also remove any associated invoice record.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => setOrderToDelete(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteOrder(orderToDelete.id);
+                  setOrderToDelete(null);
+                  showToast(`Order ${orderToDelete.id} deleted.`);
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all shadow-md cursor-pointer"
+              >
+                Yes, Delete Order
+              </button>
+            </div>
           </div>
         </div>
       )}

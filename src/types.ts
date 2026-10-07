@@ -48,6 +48,33 @@ export interface CustomerOrder {
   courier?: string;
   trackingCode?: string;
   notes?: string;
+  invoiceId?: string; // Reference to saved Invoice (only created after confirmation)
+  invoiceSavedAt?: string;
+  orderNumberSentAt?: string;
+  invoiceNumberSentAt?: string;
+}
+
+export interface Invoice {
+  id: string; // e.g. "INV-2026-1049"
+  orderId: string; // e.g. "DH-BD-891234"
+  createdAt: string; // Timestamp when confirmed and invoice created
+  orderDate: string; // Date the order was initially placed
+  customerName: string;
+  email?: string;
+  phone: string;
+  address: string;
+  city: string;
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  status: 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+  paymentMethod: string;
+  courier?: string;
+  trackingCode?: string;
+  notes?: string;
+  whatsappSentAt?: string;
+  emailSentAt?: string;
 }
 
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest';

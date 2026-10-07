@@ -1,4 +1,4 @@
-import { Product } from '../types';
+import { Product, Invoice } from '../types';
 
 export const INITIAL_CATEGORIES = [
   'Party Gowns',
@@ -246,6 +246,7 @@ export const INITIAL_ORDERS = [
     shipping: 0, // Free delivery for 5000+
     total: 9350,
     status: 'Confirmed' as const,
+    invoiceId: 'INV-2026-8193',
     paymentMethod: 'bKash / Nagad' as const,
     courier: 'Steadfast Courier',
     trackingCode: 'STF-CTG-88219'
@@ -272,6 +273,7 @@ export const INITIAL_ORDERS = [
     shipping: 0,
     total: 5600,
     status: 'Shipped' as const,
+    invoiceId: 'INV-2026-7362',
     paymentMethod: 'Cash on Delivery (COD)' as const,
     courier: 'Pathao Courier',
     trackingCode: 'PTH-SYL-49201'
@@ -298,6 +300,7 @@ export const INITIAL_ORDERS = [
     shipping: 80,
     total: 3030,
     status: 'Delivered' as const,
+    invoiceId: 'INV-2026-6251',
     paymentMethod: 'Debit/Credit Card' as const,
     courier: 'RedX Express',
     trackingCode: 'RDX-DHK-99120'
@@ -326,6 +329,104 @@ export const INITIAL_ORDERS = [
     status: 'Cancelled' as const,
     paymentMethod: 'Cash on Delivery (COD)' as const,
     notes: 'Customer changed event date. Order cancelled upon phone confirmation.'
+  }
+];
+
+export const INITIAL_INVOICES: Invoice[] = [
+  {
+    id: 'INV-2026-8193',
+    orderId: 'DH-BD-819302',
+    createdAt: '2026-03-10T19:00:00Z',
+    orderDate: '2026-03-10T18:45:00Z',
+    customerName: 'Nusrat Jahan Chowdhury',
+    email: 'nusrat.j@yahoo.com',
+    phone: '01819-338291',
+    address: 'Apt 5B, Mehedibag Tower, Nasirabad',
+    city: 'Nasirabad, Chittagong',
+    items: [
+      {
+        productId: 'dhong-003',
+        name: 'Celeste Crimson High-Slit Gala Gown',
+        price: 5900,
+        size: 'S',
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        productId: 'dhong-002',
+        name: 'Solstice Emerald Velvet Cocktail Dress',
+        price: 3450,
+        size: 'S',
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 9350,
+    shipping: 0,
+    total: 9350,
+    status: 'Confirmed',
+    paymentMethod: 'bKash / Nagad',
+    courier: 'Steadfast Courier',
+    trackingCode: 'STF-CTG-88219',
+    whatsappSentAt: '2026-03-10T19:05:00Z',
+    emailSentAt: '2026-03-10T19:05:00Z'
+  },
+  {
+    id: 'INV-2026-7362',
+    orderId: 'DH-BD-736281',
+    createdAt: '2026-03-09T11:45:00Z',
+    orderDate: '2026-03-09T11:15:00Z',
+    customerName: 'Sadia Rahman',
+    email: 'sadia.rahman@outlook.com',
+    phone: '01972-910283',
+    address: 'Shahi Eidgah Road, Subidbazar',
+    city: 'Sylhet Sadar, Sylhet',
+    items: [
+      {
+        productId: 'dhong-007',
+        name: 'Saffron Organza Tiered Gown',
+        price: 5600,
+        size: 'L',
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 5600,
+    shipping: 0,
+    total: 5600,
+    status: 'Shipped',
+    paymentMethod: 'Cash on Delivery (COD)',
+    courier: 'Pathao Courier',
+    trackingCode: 'PTH-SYL-49201',
+    whatsappSentAt: '2026-03-09T11:50:00Z'
+  },
+  {
+    id: 'INV-2026-6251',
+    orderId: 'DH-BD-625109',
+    createdAt: '2026-03-08T10:00:00Z',
+    orderDate: '2026-03-08T09:30:00Z',
+    customerName: 'Samira Akter',
+    email: 'samira.dhaka@gmail.com',
+    phone: '01683-119284',
+    address: 'Flat 4A, Plot 18, Road 3, Dhanmondi',
+    city: 'Dhanmondi, Dhaka',
+    items: [
+      {
+        productId: 'dhong-006',
+        name: 'Nocturne Noir Satin Slip Dress',
+        price: 2950,
+        size: 'M',
+        quantity: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80'
+      }
+    ],
+    subtotal: 2950,
+    shipping: 80,
+    total: 3030,
+    status: 'Delivered',
+    paymentMethod: 'Debit/Credit Card',
+    courier: 'RedX Express',
+    trackingCode: 'RDX-DHK-99120'
   }
 ];
 

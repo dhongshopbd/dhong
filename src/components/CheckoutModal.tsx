@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { CustomerOrder } from '../types';
-import { X, CheckCircle, ShieldCheck, CreditCard, Banknote, ShoppingBag, Truck } from 'lucide-react';
+import { X, CheckCircle, ShieldCheck, CreditCard, Banknote, ShoppingBag, Truck, MessageCircle, Mail, Send, Clock, Sparkles } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
+import { triggerOrderNumberNotification, formatBDPhoneForWhatsApp } from '../utils/notifications';
 
 interface CheckoutModalProps {
   onClose: () => void;
@@ -82,23 +83,89 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
 
         {/* Content */}
         {completedOrder ? (
-          <div className="p-6 sm:p-8 text-center space-y-5">
+          <div className="p-6 sm:p-8 space-y-5 text-neutral-900">
             <div className="w-16 h-16 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center mx-auto">
               <CheckCircle className="w-8 h-8" />
             </div>
 
-            <div>
+            <div className="text-center">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-700 text-[11px] font-bold uppercase tracking-wider mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Come meet the new you • Dhong BD</span>
+              </div>
               <h2 className="font-brand text-2xl font-bold text-neutral-900 mb-1">
                 Dhonnobad! Your Dhong Order is Placed
               </h2>
               <p className="text-xs text-neutral-500 max-w-md mx-auto">
-                Your luxury dress order has been received. Our Dhaka customer support team will call you to confirm delivery details.
+                Your luxury dress order has been recorded in our system. Your <strong>Order Number</strong> has been generated and dispatched below.
               </p>
             </div>
 
+            {/* AUTOMATED ORDER NUMBER MESSAGING BANNER */}
+            {(() => {
+              const notif = triggerOrderNumberNotification(completedOrder);
+              return (
+                <div className="bg-gradient-to-r from-red-50 via-rose-50/60 to-amber-50 border border-red-200 rounded-2xl p-4 text-left space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-red-800 flex items-center gap-1.5">
+                      <Send className="w-3.5 h-3.5 text-red-600" />
+                      Automatic Customer Dispatch (Step 1: Order Number)
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-red-200 text-red-700 font-bold">
+                      {completedOrder.id}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-neutral-700 leading-relaxed">
+                    We automatically prepared notifications for your WhatsApp number and Gmail with your Order Number and dress summary:
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    {/* WhatsApp Action */}
+                    <a
+                      href={notif.whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all text-center"
+                    >
+                      <MessageCircle className="w-4 h-4 shrink-0" />
+                      <span>Send Order # via WhatsApp</span>
+                    </a>
+
+                    {/* Gmail Action */}
+                    {completedOrder.email ? (
+                      <a
+                        href={notif.gmailUrl || notif.mailtoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm transition-all text-center"
+                      >
+                        <Mail className="w-4 h-4 shrink-0" />
+                        <span>Send Order # via Gmail</span>
+                      </a>
+                    ) : (
+                      <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-100 text-neutral-500 text-xs italic">
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>No Email Provided</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Note about official invoice */}
+                  <div className="p-2.5 rounded-xl bg-white/80 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
+                    <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+                    <span>
+                      <strong>Important Notice:</strong> Per store policy, your <strong>Official Invoice</strong> will be saved to the database only after Dhong Admin confirms your order. Once confirmed, you will automatically receive your official Invoice Number!
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Order Details Card */}
             <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-left max-w-md mx-auto space-y-2 text-xs">
               <div className="flex justify-between border-b border-neutral-200 pb-2">
-                <span className="text-neutral-500">Order ID:</span>
+                <span className="text-neutral-500">Order ID / Number:</span>
                 <span className="font-mono font-bold text-red-700">{completedOrder.id}</span>
               </div>
               <div className="flex justify-between">
@@ -106,9 +173,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                 <span className="text-neutral-900 font-medium">{completedOrder.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-neutral-500">Phone:</span>
-                <span className="text-neutral-900 font-medium">{completedOrder.phone}</span>
+                <span className="text-neutral-500">WhatsApp / Phone:</span>
+                <span className="text-neutral-900 font-medium font-mono">{completedOrder.phone}</span>
               </div>
+              {completedOrder.email && (
+                <div className="flex justify-between">
+                  <span className="text-neutral-500">Gmail:</span>
+                  <span className="text-neutral-900 font-medium">{completedOrder.email}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-neutral-500">Delivery Address:</span>
                 <span className="text-neutral-900 text-right font-medium">{completedOrder.address}, {completedOrder.city}</span>
@@ -123,13 +196,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 text-center">
               <button
                 onClick={() => {
                   setIsCartOpen(false);
                   onClose();
                 }}
-                className="px-6 py-3 rounded-full bg-neutral-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md"
+                className="px-6 py-3 rounded-full bg-neutral-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
               >
                 Continue Shopping
               </button>
