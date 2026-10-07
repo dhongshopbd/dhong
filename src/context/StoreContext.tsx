@@ -12,6 +12,8 @@ import {
   persistInvoices,
   resetDatabaseToDefaults,
   idbGet,
+  LEGACY_DUMMY_ORDER_IDS,
+  LEGACY_DUMMY_INVOICE_IDS,
 } from '../utils/db';
 
 interface StoreContextType {
@@ -146,13 +148,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     });
     idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
-      if (Array.isArray(idbOrders) && idbOrders.length > 0) {
-        setOrders(idbOrders);
+      if (Array.isArray(idbOrders)) {
+        const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
+        setOrders(realOrders);
+        if (realOrders.length !== idbOrders.length) {
+          persistOrders(realOrders);
+        }
       }
     });
     idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
-      if (Array.isArray(idbInvoices) && idbInvoices.length > 0) {
-        setInvoices(idbInvoices);
+      if (Array.isArray(idbInvoices)) {
+        const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
+        setInvoices(realInvoices);
+        if (realInvoices.length !== idbInvoices.length) {
+          persistInvoices(realInvoices);
+        }
       }
     });
   }, []);
@@ -743,18 +753,21 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resetOrdersToSample = async () => {
-    setOrders(INITIAL_ORDERS);
-    setInvoices(INITIAL_INVOICES);
-    await persistOrders(INITIAL_ORDERS);
-    await persistInvoices(INITIAL_INVOICES);
+    setOrders([]);
+    setInvoices([]);
+    await persistOrders([]);
+    await persistInvoices([]);
   };
 
   const resetToSampleProducts = async () => {
-    const res = await resetDatabaseToDefaults();
+    // Preserve whatever products and categories the user has in memory/database
+    const res = await resetDatabaseToDefaults(products, categories);
     setProducts(res.products);
     setCategories(res.categories);
-    setOrders(res.orders);
-    setInvoices(res.invoices);
+    setOrders([]);
+    setInvoices([]);
+    await persistOrders([]);
+    await persistInvoices([]);
   };
 
   // Computed filtered & sorted products with tick mark multi-selection

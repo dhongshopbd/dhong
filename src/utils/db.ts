@@ -142,6 +142,22 @@ export async function persistCategories(categories: string[]): Promise<void> {
   await idbSet(STORAGE_KEYS.CATEGORIES, categories);
 }
 
+// Legacy sample IDs to strip out so orders and invoices remain completely empty until real orders arrive
+export const LEGACY_DUMMY_ORDER_IDS = new Set([
+  'DH-BD-928174',
+  'DH-BD-819302',
+  'DH-BD-736281',
+  'DH-BD-625109',
+  'DH-BD-510928',
+  'DH-BD-904128'
+]);
+
+export const LEGACY_DUMMY_INVOICE_IDS = new Set([
+  'INV-2026-8193',
+  'INV-2026-7362',
+  'INV-2026-6251'
+]);
+
 // --- ORDERS REPOSITORY ---
 export function loadInitialOrders(): CustomerOrder[] {
   try {
@@ -149,7 +165,12 @@ export function loadInitialOrders(): CustomerOrder[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        return parsed;
+        // Keep ONLY real orders placed by customer or created manually, removing dummy demo orders
+        const realOrders = parsed.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
+        if (realOrders.length !== parsed.length) {
+          localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(realOrders));
+        }
+        return realOrders;
       }
     }
   } catch (err) {
@@ -157,9 +178,9 @@ export function loadInitialOrders(): CustomerOrder[] {
   }
 
   try {
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
   } catch {}
-  return INITIAL_ORDERS;
+  return [];
 }
 
 export async function persistOrders(orders: CustomerOrder[]): Promise<void> {
@@ -179,7 +200,12 @@ export function loadInitialInvoices(): Invoice[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        return parsed;
+        // Keep ONLY real invoices generated from confirmed orders, removing dummy demo invoices
+        const realInvoices = parsed.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
+        if (realInvoices.length !== parsed.length) {
+          localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(realInvoices));
+        }
+        return realInvoices;
       }
     }
   } catch (err) {
@@ -187,9 +213,9 @@ export function loadInitialInvoices(): Invoice[] {
   }
 
   try {
-    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(INITIAL_INVOICES));
+    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify([]));
   } catch {}
-  return INITIAL_INVOICES;
+  return [];
 }
 
 export async function persistInvoices(invoices: Invoice[]): Promise<void> {
@@ -217,30 +243,34 @@ export async function saveInvoice(invoice: Invoice): Promise<Invoice[]> {
 }
 
 // --- RESET DATABASE TO DEFAULT FACTORY SAMPLE ---
-export async function resetDatabaseToDefaults(): Promise<{
+export async function resetDatabaseToDefaults(currentProducts?: Product[], currentCategories?: string[]): Promise<{
   products: Product[];
   categories: string[];
   orders: CustomerOrder[];
   invoices: Invoice[];
 }> {
+  // Never wipe out user's manually added products or categories if they exist!
+  const prods = currentProducts && currentProducts.length > 0 ? currentProducts : loadInitialProducts();
+  const cats = currentCategories && currentCategories.length > 0 ? currentCategories : loadInitialCategories();
+
   try {
     localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
-    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(INITIAL_INVOICES));
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(prods));
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(cats));
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
+    localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify([]));
   } catch {}
 
-  await idbSet(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-  await idbSet(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
-  await idbSet(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
-  await idbSet(STORAGE_KEYS.INVOICES, INITIAL_INVOICES);
+  await idbSet(STORAGE_KEYS.PRODUCTS, prods);
+  await idbSet(STORAGE_KEYS.CATEGORIES, cats);
+  await idbSet(STORAGE_KEYS.ORDERS, []);
+  await idbSet(STORAGE_KEYS.INVOICES, []);
   await idbSet(STORAGE_KEYS.INITIALIZED, true);
 
   return {
-    products: INITIAL_PRODUCTS,
-    categories: INITIAL_CATEGORIES,
-    orders: INITIAL_ORDERS,
-    invoices: INITIAL_INVOICES,
+    products: prods,
+    categories: cats,
+    orders: [],
+    invoices: [],
   };
 }

@@ -401,24 +401,38 @@ export const OrdersManager: React.FC = () => {
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
         <div className="p-12 text-center bg-neutral-900 border border-neutral-800 rounded-2xl space-y-3">
-          <ShoppingBag className="w-10 h-10 text-neutral-600 mx-auto" />
-          <h3 className="font-brand text-lg font-semibold text-neutral-300">No Orders Found</h3>
-          <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+          <ShoppingBag className="w-12 h-12 text-red-500/60 mx-auto" />
+          <h3 className="font-brand text-lg font-semibold text-neutral-200">
+            {orders.length === 0 ? 'No Orders Recorded Yet' : 'No Orders Found'}
+          </h3>
+          <p className="text-xs text-neutral-400 max-w-md mx-auto leading-relaxed">
             {orders.length === 0
-              ? 'No customer orders have been recorded yet.'
+              ? 'Your orders list is currently empty. Whenever a customer places an order on your website or you record a manual phone/WhatsApp order, it will automatically save here in real-time.'
               : 'No orders match your filter criteria or search query.'}
           </p>
-          {(statusFilter !== 'ALL' || paymentFilter !== 'ALL' || searchQuery) && (
-            <button
-              onClick={() => {
-                setStatusFilter('ALL');
-                setPaymentFilter('ALL');
-                setSearchQuery('');
-              }}
-              className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold"
-            >
-              Clear Order Filters
-            </button>
+          {orders.length === 0 ? (
+            <div className="pt-2">
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Record Manual Order</span>
+              </button>
+            </div>
+          ) : (
+            (statusFilter !== 'ALL' || paymentFilter !== 'ALL' || searchQuery) && (
+              <button
+                onClick={() => {
+                  setStatusFilter('ALL');
+                  setPaymentFilter('ALL');
+                  setSearchQuery('');
+                }}
+                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold cursor-pointer"
+              >
+                Clear Order Filters
+              </button>
+            )
           )}
         </div>
       ) : (

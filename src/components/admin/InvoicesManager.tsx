@@ -219,11 +219,13 @@ export const InvoicesManager: React.FC = () => {
       {/* Invoices List */}
       {filteredInvoices.length === 0 ? (
         <div className="p-12 text-center bg-neutral-900 border border-neutral-800 rounded-2xl space-y-3">
-          <FileText className="w-10 h-10 text-neutral-600 mx-auto" />
-          <h3 className="font-brand text-lg font-semibold text-neutral-300">No Saved Invoices Found</h3>
-          <p className="text-xs text-neutral-500 max-w-md mx-auto">
+          <FileText className="w-12 h-12 text-red-500/60 mx-auto" />
+          <h3 className="font-brand text-lg font-semibold text-neutral-200">
+            {invoices.length === 0 ? 'No Invoices Saved Yet' : 'No Invoices Found'}
+          </h3>
+          <p className="text-xs text-neutral-400 max-w-md mx-auto leading-relaxed">
             {invoices.length === 0
-              ? 'No invoices have been saved yet. As per your store model, invoices are saved automatically into the database as soon as you confirm an order.'
+              ? 'Your invoice database is currently empty. Per your store policy, official invoices are created and saved here automatically as soon as you confirm an order from the Customer Orders tab.'
               : `No invoices match "${searchQuery || statusFilter}". Try searching with a different Invoice Number or Customer Phone.`}
           </p>
           {(searchQuery || statusFilter !== 'ALL') && (
