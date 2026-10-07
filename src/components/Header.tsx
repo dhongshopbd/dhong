@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
-import { Search, ShoppingBag, X, ChevronDown, Layers, Sparkles, Check, Tag } from 'lucide-react';
+import { Search, ShoppingBag, X, ChevronDown, ChevronRight, Layers, Sparkles, Check, Tag, ArrowRight } from 'lucide-react';
+import { CATEGORY_HIERARCHY } from '../data/categoryHierarchy';
 
 export const Header: React.FC = () => {
   const { 
@@ -12,11 +13,13 @@ export const Header: React.FC = () => {
     resetFilters,
     categories,
     selectCategoryOnly,
+    selectCategoryWithTag,
     products
   } = useStore();
 
   const [localSearch, setLocalSearch] = useState(filters.searchQuery);
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -40,7 +43,8 @@ export const Header: React.FC = () => {
     }
     catTimerRef.current = setTimeout(() => {
       setIsCatDropdownOpen(false);
-    }, 220);
+      setHoveredCategory(null);
+    }, 280);
   };
 
   // Hover handlers for "+ More Categories" dropdown
@@ -66,6 +70,7 @@ export const Header: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsCatDropdownOpen(false);
+        setHoveredCategory(null);
       }
       if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
         setIsMoreOpen(false);
@@ -135,6 +140,21 @@ export const Header: React.FC = () => {
   const handleSelectCategory = (cat: string) => {
     selectCategoryOnly(cat);
     setIsCatDropdownOpen(false);
+    setHoveredCategory(null);
+    setIsMoreOpen(false);
+
+    // Scroll to dresses collection if not in view
+    const mainSection = document.querySelector('main');
+    if (mainSection) {
+      mainSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Handle subcategory selection with specific tag
+  const handleSelectSubcategory = (cat: string, tag?: string) => {
+    selectCategoryWithTag(cat, tag);
+    setIsCatDropdownOpen(false);
+    setHoveredCategory(null);
     setIsMoreOpen(false);
 
     // Scroll to dresses collection if not in view
@@ -154,6 +174,8 @@ export const Header: React.FC = () => {
   };
 
   const isAllSelected = filters.selectedCategories.length === 0;
+  const activeHierarchy = hoveredCategory ? CATEGORY_HIERARCHY[hoveredCategory] : null;
+  const hasSubcategories = Boolean(activeHierarchy?.subcategories && activeHierarchy.subcategories.length > 0);
 
   return (
     <header className="sticky top-0 z-40 bg-neutral-950/95 backdrop-blur-md border-b border-neutral-800/80 shadow-lg">
@@ -250,123 +272,227 @@ export const Header: React.FC = () => {
         </div>
 
         {/* TOP CATEGORIES NAVIGATION BAR (Dropdown + Tabs) */}
-        <div className="border-t border-neutral-800/80 py-2 flex items-center justify-between gap-3 text-xs">
+        <div className="border-t border-neutral-800/80 py-2 flex items-center gap-2.5 text-xs relative">
           
-          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5 w-full">
-            
-            {/* 1. Main "Dress Categories" Dropdown Button - Opens on hover when cursor is kept over it */}
-            <div 
-              className="relative shrink-0 group" 
-              ref={dropdownRef}
-              onMouseEnter={handleCatMouseEnter}
-              onMouseLeave={handleCatMouseLeave}
+          {/* 1. Main "Dress Categories" Dropdown Button - NOT inside overflow container so flyout will NEVER be clipped */}
+          <div 
+            className="relative shrink-0" 
+            ref={dropdownRef}
+            onMouseEnter={handleCatMouseEnter}
+            onMouseLeave={handleCatMouseLeave}
+          >
+            <button
+              id="header-categories-dropdown-btn"
+              type="button"
+              onClick={() => setIsCatDropdownOpen(!isCatDropdownOpen)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all select-none cursor-pointer ${
+                isCatDropdownOpen
+                  ? 'bg-red-600 text-white border-red-600 font-bold shadow-xs'
+                  : 'bg-neutral-900 hover:bg-neutral-850 text-neutral-200 hover:text-red-400 border-neutral-800'
+              }`}
+              aria-haspopup="true"
+              aria-expanded={isCatDropdownOpen}
+              title="Hover cursor to view all dress categories"
             >
-              <button
-                id="header-categories-dropdown-btn"
-                type="button"
-                onClick={() => setIsCatDropdownOpen(!isCatDropdownOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all select-none ${
-                  isCatDropdownOpen
-                    ? 'bg-red-600 text-white border-red-600 font-bold shadow-xs'
-                    : 'bg-neutral-900 hover:bg-neutral-850 text-neutral-200 hover:text-red-400 border-neutral-800'
-                }`}
-                aria-haspopup="true"
-                aria-expanded={isCatDropdownOpen}
-                title="Hover cursor to view all dress categories"
+              <Layers className="w-3.5 h-3.5 text-red-500 group-hover:text-white transition-colors" />
+              <span className="font-semibold uppercase tracking-wider text-[11px]">Dress Categories</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isCatDropdownOpen ? 'rotate-180 text-white' : 'text-neutral-400'}`} />
+            </button>
+
+            {/* Categories Mega Dropdown Menu - Drops down on hover */}
+            {isCatDropdownOpen && (
+              <div 
+                id="header-categories-dropdown-menu"
+                onMouseEnter={handleCatMouseEnter}
+                onMouseLeave={handleCatMouseLeave}
+                className="absolute left-0 top-full pt-1.5 z-50 animate-fadeIn flex items-start gap-2 select-none"
               >
-                <Layers className="w-3.5 h-3.5 text-red-500 group-hover:text-white transition-colors" />
-                <span className="font-semibold uppercase tracking-wider text-[11px]">Dress Categories</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isCatDropdownOpen ? 'rotate-180 text-white' : 'text-neutral-400'}`} />
-              </button>
+                {/* Left Column: All Dress Categories */}
+                <div className="w-72 sm:w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-2.5 backdrop-blur-xl border-t-2 border-t-red-600 shrink-0">
+                  <div className="px-3 py-2 border-b border-neutral-800 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                    <span className="flex items-center gap-1.5 text-red-400">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Dress Categories (ঢং কালেকশন)
+                    </span>
+                    <span className="text-[10px] text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded-full font-mono">
+                      {categories.length} total
+                    </span>
+                  </div>
 
-              {/* Categories Mega Dropdown Menu - Drops down on hover */}
-              {isCatDropdownOpen && (
-                <div 
-                  id="header-categories-dropdown-menu"
-                  onMouseEnter={handleCatMouseEnter}
-                  onMouseLeave={handleCatMouseLeave}
-                  className="absolute left-0 top-full pt-1.5 w-72 sm:w-84 z-50 animate-fadeIn"
-                >
-                  <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-2.5 backdrop-blur-xl border-t-2 border-t-red-600">
-                    <div className="px-3 py-2 border-b border-neutral-800 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-neutral-400">
-                      <span className="flex items-center gap-1.5 text-red-400">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Dress Categories (ঢং কালেকশন)
+                  <div className="py-1.5 max-h-[380px] overflow-y-auto space-y-1">
+                    {/* All Dresses option */}
+                    <button
+                      type="button"
+                      onMouseEnter={() => setHoveredCategory(null)}
+                      onClick={() => handleSelectCategory('All')}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                        isAllSelected
+                          ? 'bg-red-600/15 text-red-300 font-semibold border border-red-500/30'
+                          : 'text-neutral-300 hover:bg-neutral-800 hover:text-white border border-transparent'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Tag className="w-3.5 h-3.5 text-red-500" />
+                        <span>All Collections / সমস্ত পোশাক</span>
                       </span>
-                      <span className="text-[10px] text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded-full font-mono">
-                        {categories.length} total
+                      <span className="text-[10px] font-mono text-neutral-400">
+                        {products.length} dresses
                       </span>
-                    </div>
+                    </button>
 
-                    <div className="py-1.5 max-h-80 overflow-y-auto space-y-1">
-                      {/* All Dresses option */}
-                      <button
-                        type="button"
-                        onClick={() => handleSelectCategory('All')}
-                        className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                          isAllSelected
-                            ? 'bg-red-600/15 text-red-300 font-semibold border border-red-500/30'
-                            : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <Tag className="w-3.5 h-3.5 text-red-500" />
-                          <span>All Collections / সমস্ত পোশাক</span>
-                        </span>
-                        <span className="text-[10px] font-mono text-neutral-400">
-                          {products.length} dresses
-                        </span>
-                      </button>
+                    {/* Dynamic categories (Automatically updates whenever a category is added!) */}
+                    {categories.map((cat) => {
+                      const isSelected = filters.selectedCategories.includes(cat);
+                      const isHovered = hoveredCategory === cat;
+                      const count = getDressCount(cat);
+                      const hierarchy = CATEGORY_HIERARCHY[cat];
+                      const hasSubs = Boolean(hierarchy?.subcategories && hierarchy.subcategories.length > 0);
 
-                      {/* Dynamic categories (Automatically updates whenever a category is added!) */}
-                      {categories.map((cat) => {
-                        const isSelected = filters.selectedCategories.includes(cat);
-                        const count = getDressCount(cat);
-                        return (
-                          <button
-                            key={cat}
-                            type="button"
-                            onClick={() => handleSelectCategory(cat)}
-                            className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors ${
-                              isSelected
-                                ? 'bg-red-600/15 text-red-300 font-semibold border border-red-500/30'
-                                : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              {isSelected ? (
-                                <Check className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                              ) : (
-                                <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 shrink-0"></span>
-                              )}
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onMouseEnter={() => {
+                            if (hasSubs) {
+                              setHoveredCategory(cat);
+                            } else {
+                              setHoveredCategory(null);
+                            }
+                          }}
+                          onClick={() => handleSelectCategory(cat)}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                            isHovered
+                              ? 'bg-neutral-800 text-white font-medium border border-neutral-700 shadow-xs'
+                              : isSelected
+                              ? 'bg-red-600/15 text-red-300 font-semibold border border-red-500/30'
+                              : 'text-neutral-300 hover:bg-neutral-800/80 hover:text-white border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            {isSelected ? (
+                              <Check className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                            ) : (
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${isHovered ? 'bg-red-500 ring-2 ring-red-500/30' : 'bg-neutral-600'}`}></span>
+                            )}
+                            <div className="flex flex-col min-w-0">
                               <span className="line-clamp-1">{cat}</span>
+                              {hierarchy?.nameBn && (
+                                <span className="text-[10px] text-neutral-400 font-normal leading-tight line-clamp-1">
+                                  {hierarchy.nameBn}
+                                </span>
+                              )}
                             </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 ml-2">
                             <span className="text-[10px] font-mono text-neutral-400 bg-neutral-950 px-2 py-0.5 rounded-full">
-                              {count} {count === 1 ? 'dress' : 'dresses'}
+                              {count}
                             </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                            {hasSubs && (
+                              <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-150 ${isHovered ? 'text-red-400 translate-x-0.5' : 'text-neutral-500'}`} />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                    <div className="pt-2 mt-1 border-t border-neutral-800 px-2 flex items-center justify-between text-[11px] text-neutral-400">
-                      <span>Click to filter collection</span>
-                      <span className="text-red-400/80 font-medium">Dhong BD</span>
-                    </div>
+                  <div className="pt-2 mt-1 border-t border-neutral-800 px-2 flex items-center justify-between text-[11px] text-neutral-400">
+                    <span>Hover category to expand styles</span>
+                    <span className="text-red-400/80 font-medium">Dhong BD</span>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Separator */}
-            <div className="h-4 w-px bg-neutral-800 mx-1 shrink-0 hidden sm:block"></div>
+                {/* Right Slide-Out Flyout Panel: Shows Subcategories & Cuts ONLY if hoveredCategory has more */}
+                {hoveredCategory && activeHierarchy && hasSubcategories && (
+                  <div 
+                    id="header-subcategories-flyout"
+                    onMouseEnter={handleCatMouseEnter}
+                    onMouseLeave={handleCatMouseLeave}
+                    className="w-72 sm:w-84 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-3 backdrop-blur-xl border-t-2 border-t-red-500 animate-fadeIn shrink-0"
+                  >
+                    {/* Category Title & Bengali Name */}
+                    <div className="pb-2.5 mb-2 border-b border-neutral-800">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                          <span>{activeHierarchy.name}</span>
+                        </h4>
+                        <span className="text-[10px] text-neutral-400 font-normal">
+                          {activeHierarchy.nameBn}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 mt-1 leading-relaxed">
+                        {activeHierarchy.description}
+                      </p>
+                    </div>
 
+                    {/* Subcategories List */}
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5 px-1 flex items-center justify-between">
+                      <span>Subcategories & Cuts</span>
+                      <span className="text-red-400 font-mono text-[10px]">
+                        {activeHierarchy.subcategories?.length} styles
+                      </span>
+                    </div>
+
+                    <div className="space-y-1 max-h-64 overflow-y-auto pr-0.5">
+                      {activeHierarchy.subcategories?.map((sub) => (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => handleSelectSubcategory(hoveredCategory!, sub.tag)}
+                          className="w-full text-left p-2 rounded-xl text-xs hover:bg-neutral-800/90 group transition-all border border-transparent hover:border-neutral-700/60 flex items-start justify-between gap-2 cursor-pointer"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 font-medium text-neutral-200 group-hover:text-red-400 transition-colors">
+                              <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 group-hover:bg-red-500 transition-colors shrink-0"></span>
+                              <span className="line-clamp-1">{sub.name}</span>
+                              {sub.nameBn && (
+                                <span className="text-[10px] text-neutral-400 font-normal">({sub.nameBn})</span>
+                              )}
+                            </div>
+                            {sub.description && (
+                              <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 mt-0.5 line-clamp-1 pl-3">
+                                {sub.description}
+                              </p>
+                            )}
+                          </div>
+                          {sub.tag && (
+                            <span className="shrink-0 text-[10px] font-mono bg-neutral-950 group-hover:bg-red-950/60 text-neutral-400 group-hover:text-red-300 border border-neutral-800 group-hover:border-red-800/50 px-2 py-0.5 rounded-md transition-colors">
+                              #{sub.tag}
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Bottom Action: View all in this category */}
+                    <div className="pt-2 mt-2 border-t border-neutral-800">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectCategory(hoveredCategory!)}
+                        className="w-full py-1.5 px-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 text-xs font-semibold flex items-center justify-center gap-1.5 border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
+                      >
+                        <span>View All {hoveredCategory} ({getDressCount(hoveredCategory!)})</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Separator */}
+          <div className="h-4 w-px bg-neutral-800 mx-0.5 shrink-0 hidden sm:block"></div>
+
+          {/* Quick Category Tabs in scrollable container */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5 min-w-0 flex-1">
             {/* 2. "All Dresses" Tab */}
             <button
               id="header-tab-all"
               type="button"
               onClick={() => handleSelectCategory('All')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all cursor-pointer ${
                 isAllSelected
                   ? 'bg-neutral-850 text-red-400 border border-red-500/40 font-semibold shadow-xs'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
@@ -385,7 +511,7 @@ export const Header: React.FC = () => {
                   id={`header-tab-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                   type="button"
                   onClick={() => handleSelectCategory(cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
                       ? 'bg-neutral-850 text-red-400 border border-red-500/40 font-semibold shadow-xs'
                       : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
@@ -401,7 +527,7 @@ export const Header: React.FC = () => {
               );
             })}
 
-            {/* 4. "+ More Categories" Dropdown Tab - Also opens on hover when cursor is kept over it */}
+            {/* 4. "+ More Categories" Dropdown Tab */}
             {overflowTabs.length > 0 && (
               <div 
                 className="relative shrink-0 group" 
@@ -413,7 +539,7 @@ export const Header: React.FC = () => {
                   id="header-more-categories-btn"
                   type="button"
                   onClick={() => setIsMoreOpen(!isMoreOpen)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all flex items-center gap-1 border border-transparent ${
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all flex items-center gap-1 border border-transparent cursor-pointer ${
                     isMoreOpen || overflowTabs.some((c) => filters.selectedCategories.includes(c))
                       ? 'bg-neutral-850 text-red-400 border-neutral-700 font-semibold'
                       : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
@@ -444,7 +570,7 @@ export const Header: React.FC = () => {
                               key={cat}
                               type="button"
                               onClick={() => handleSelectCategory(cat)}
-                              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
                                 isSelected
                                   ? 'bg-red-600/15 text-red-300 font-semibold'
                                   : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
@@ -463,7 +589,6 @@ export const Header: React.FC = () => {
                 )}
               </div>
             )}
-
           </div>
 
         </div>

@@ -36,6 +36,7 @@ interface StoreContextType {
   addCategory: (categoryName: string) => boolean;
   deleteCategory: (categoryName: string) => void;
   selectCategoryOnly: (categoryName: string) => void;
+  selectCategoryWithTag: (categoryName: string, tag?: string) => void;
 
   // Filter actions with tick marks & multi-selection
   toggleCategoryFilter: (category: string) => void;
@@ -271,6 +272,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setFilters((prev) => ({ ...prev, selectedCategories: [] }));
     } else {
       setFilters((prev) => ({ ...prev, selectedCategories: [categoryName] }));
+    }
+    handleSetCurrentView('store');
+  };
+
+  const selectCategoryWithTag = (categoryName: string, tag?: string) => {
+    if (!categoryName || categoryName === 'All' || categoryName === 'All Dresses') {
+      setFilters((prev) => ({
+        ...prev,
+        selectedCategories: [],
+        selectedTags: tag ? [tag] : [],
+      }));
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        selectedCategories: [categoryName],
+        selectedTags: tag ? [tag] : [],
+      }));
     }
     handleSetCurrentView('store');
   };
@@ -648,6 +666,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addCategory,
         deleteCategory,
         selectCategoryOnly,
+        selectCategoryWithTag,
         toggleCategoryFilter,
         clearCategoriesFilter,
         toggleSizeFilter,
