@@ -24,6 +24,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
 
   const [completedOrder, setCompletedOrder] = useState<CustomerOrder | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [copiedOrderNumber, setCopiedOrderNumber] = useState(false);
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const isFreeShipping = subtotal >= 5000;
@@ -33,24 +35,25 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.customerName || !formData.phone || !formData.address) {
-      alert('Please fill in your name, phone number, and delivery address.');
+    setErrorMessage('');
+    if (!formData.customerName.trim() || !formData.phone.trim() || !formData.address.trim()) {
+      setErrorMessage('Please fill in your name, valid phone number, and detailed delivery address.');
       return;
     }
 
     setIsSubmitting(true);
     setTimeout(() => {
       const order = placeOrder({
-        customerName: formData.customerName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: `${formData.city}, ${formData.district}`,
+        customerName: formData.customerName.trim(),
+        email: formData.email.trim() || undefined,
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        city: `${formData.city}`,
         paymentMethod: formData.paymentMethod,
       });
       setCompletedOrder(order);
       setIsSubmitting(false);
-    }, 700);
+    }, 500);
   };
 
   return (
@@ -101,72 +104,48 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               </p>
             </div>
 
-            {/* AUTOMATED ORDER NUMBER MESSAGING BANNER */}
-            {(() => {
-              const notif = triggerOrderNumberNotification(completedOrder);
-              return (
-                <div className="bg-gradient-to-r from-red-50 via-rose-50/60 to-amber-50 border border-red-200 rounded-2xl p-4 text-left space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-red-800 flex items-center gap-1.5">
-                      <Send className="w-3.5 h-3.5 text-red-600" />
-                      Automatic Customer Dispatch (Step 1: Order Number)
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white border border-red-200 text-red-700 font-bold">
-                      {completedOrder.id}
-                    </span>
-                  </div>
+            {/* AUTOMATED ORDER NUMBER CONFIRMATION BANNER */}
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-left space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-emerald-900 flex items-center gap-1.5 text-xs">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  Order #{completedOrder.id} Sent Automatically
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">
+                  Auto-Dispatched
+                </span>
+              </div>
 
-                  <p className="text-xs text-neutral-700 leading-relaxed">
-                    We automatically prepared notifications for your WhatsApp number and Gmail with your Order Number and dress summary:
-                  </p>
+              <p className="text-emerald-950 text-xs leading-relaxed">
+                Your order was placed directly on our website. Our system has automatically sent your <strong>Order Number #{completedOrder.id}</strong> and dress details to your WhatsApp (<strong>{completedOrder.phone}</strong>){completedOrder.email ? ` and your Gmail (${completedOrder.email})` : ''}.
+              </p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                    {/* WhatsApp Action */}
-                    <a
-                      href={notif.whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all text-center"
-                    >
-                      <MessageCircle className="w-4 h-4 shrink-0" />
-                      <span>Send Order # via WhatsApp</span>
-                    </a>
-
-                    {/* Gmail Action */}
-                    {completedOrder.email ? (
-                      <a
-                        href={notif.gmailUrl || notif.mailtoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm transition-all text-center"
-                      >
-                        <Mail className="w-4 h-4 shrink-0" />
-                        <span>Send Order # via Gmail</span>
-                      </a>
-                    ) : (
-                      <div className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-100 text-neutral-500 text-xs italic">
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>No Email Provided</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Note about official invoice */}
-                  <div className="p-2.5 rounded-xl bg-white/80 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
-                    <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
-                    <span>
-                      <strong>Important Notice:</strong> Per store policy, your <strong>Official Invoice</strong> will be saved to the database only after Dhong Admin confirms your order. Once confirmed, you will automatically receive your official Invoice Number!
-                    </span>
-                  </div>
-                </div>
-              );
-            })()}
+              <div className="text-[11px] text-emerald-800 pt-1.5 border-t border-emerald-200/70 flex items-start gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  Our team in Dhaka is preparing your dresses. When your order is confirmed, your official Tax Invoice will also be automatically sent to your WhatsApp and Gmail.
+                </span>
+              </div>
+            </div>
 
             {/* Order Details Card */}
             <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-left max-w-md mx-auto space-y-2 text-xs">
-              <div className="flex justify-between border-b border-neutral-200 pb-2">
+              <div className="flex justify-between items-center border-b border-neutral-200 pb-2">
                 <span className="text-neutral-500">Order ID / Number:</span>
-                <span className="font-mono font-bold text-red-700">{completedOrder.id}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-red-700 text-sm">{completedOrder.id}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText(completedOrder.id);
+                      setCopiedOrderNumber(true);
+                      setTimeout(() => setCopiedOrderNumber(false), 2000);
+                    }}
+                    className="px-2 py-0.5 rounded bg-white border border-neutral-300 text-[10px] text-neutral-600 hover:text-black font-semibold cursor-pointer"
+                  >
+                    {copiedOrderNumber ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-500">Customer:</span>
@@ -196,6 +175,35 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               </div>
             </div>
 
+            {/* Direct Channel Viewers for Customer */}
+            {(() => {
+              const notif = triggerOrderNumberNotification(completedOrder);
+              return (
+                <div className="max-w-md mx-auto pt-1 flex flex-wrap gap-2 justify-center">
+                  <a
+                    href={notif.whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 text-[11px] font-semibold transition-colors"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>View WhatsApp Dispatch</span>
+                  </a>
+                  {completedOrder.email && (
+                    <a
+                      href={notif.gmailUrl || notif.mailtoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-300 text-[11px] font-semibold transition-colors"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>View Gmail Dispatch</span>
+                    </a>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="pt-2 text-center">
               <button
                 onClick={() => {
@@ -210,6 +218,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
+            {errorMessage && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-medium">
+                {errorMessage}
+              </div>
+            )}
             {/* Customer Details Form */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
