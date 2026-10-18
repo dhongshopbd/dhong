@@ -73,29 +73,30 @@ export async function idbSet<T>(key: string, value: T): Promise<void> {
   }
 }
 
+// Legacy sample IDs to strip out so products, orders, and invoices remain completely empty until user adds real items
+export const LEGACY_DUMMY_PRODUCT_IDS = new Set([
+  'dhong-001', 'dhong-002', 'dhong-003', 'dhong-004', 'dhong-005', 'dhong-006',
+  'dhong-007', 'dhong-008', 'dhong-009', 'dhong-010', 'dhong-011', 'dhong-012'
+]);
+
 // --- PRODUCTS REPOSITORY ---
 export function loadInitialProducts(): Product[] {
   try {
-    const isInit = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     const saved = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        // If it's initialized and user deleted all products to [] (empty), return []
-        if (isInit === 'true' || parsed.length > 0) {
-          return parsed;
+        const real = parsed.filter((p) => !LEGACY_DUMMY_PRODUCT_IDS.has(p.id));
+        if (real.length !== parsed.length) {
+          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(real));
         }
+        return real;
       }
     }
   } catch (err) {
     console.warn('LocalStorage products read error:', err);
   }
-  // Brand new launch
-  try {
-    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-  } catch {}
-  return INITIAL_PRODUCTS;
+  return [];
 }
 
 export async function persistProducts(products: Product[]): Promise<void> {

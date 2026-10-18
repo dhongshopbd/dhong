@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'name', 'price', 'category']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 256 &&
+        data.price is number && data.price >= 0 &&
+        data.category is string && data.category.size() > 0 && data.category.size() <= 128 &&
+        (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 1048576)) &&
+        (!('inStock' in data) || data.inStock is bool) &&
+        (!('originalPrice' in data) || data.originalPrice is number) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 10000)) &&
+        (!('sku' in data) || (data.sku is string && data.sku.size() <= 64)) &&
+        (!('sizes' in data) || (data.sizes is list && data.sizes.size() <= 20)) &&
+        (!('tags' in data) || (data.tags is list && data.tags.size() <= 50)) &&
+        (!('featured' in data) || data.featured is bool);
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'customerName', 'phone', 'address', 'city', 'items', 'subtotal', 'total', 'status', 'paymentMethod']) &&
+        data.id is string && data.id.size() <= 128 &&
+        data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 128 &&
+        data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 32 &&
+        data.address is string && data.address.size() >= 3 && data.address.size() <= 512 &&
+        data.city is string && data.city.size() >= 2 && data.city.size() <= 64 &&
+        data.items is list && data.items.size() > 0 && data.items.size() <= 100 &&
+        data.subtotal is number && data.subtotal >= 0 &&
+        data.total is number && data.total >= 0 &&
+        data.status is string &&
+        data.paymentMethod is string && data.paymentMethod.size() <= 64;
+    }
+
+    // Products: read and write enabled for admin panel with schema protection
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isValidId(productId);
+    }
+
+    // Categories
+    match /categories/{categoryId} {
+      allow read, write: if isValidId(categoryId);
+    }
+
+    // Customer Orders
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId) && isValidOrder(incoming());
+      allow read, update, delete: if isValidId(orderId);
+    }
+
+    // Invoices
+    match /invoices/{invoiceId} {
+      allow read, write: if isValidId(invoiceId);
+    }
+
+    // Admins
+    match /admins/{adminId} {
+      allow read, write: if isValidId(adminId);
+    }
+  }
+}

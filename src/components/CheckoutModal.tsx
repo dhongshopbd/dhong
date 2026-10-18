@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { CustomerOrder } from '../types';
-import { X, CheckCircle, ShieldCheck, CreditCard, Banknote, ShoppingBag, Truck, MessageCircle, Mail, Send, Clock, Sparkles } from 'lucide-react';
+import { X, CheckCircle, ShieldCheck, CreditCard, Banknote, ShoppingBag, Truck, MessageCircle, Mail, Send, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
-import { triggerOrderNumberNotification, formatBDPhoneForWhatsApp } from '../utils/notifications';
+import { triggerOrderNumberNotification, formatBDPhoneForWhatsApp, sendOrderEmailToServer } from '../utils/notifications';
 
 interface CheckoutModalProps {
   onClose: () => void;
@@ -26,6 +26,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [copiedOrderNumber, setCopiedOrderNumber] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{ status: 'idle' | 'sending' | 'sent' | 'error'; previewUrl?: string }>({ status: 'idle' });
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const isFreeShipping = subtotal >= 5000;
@@ -42,6 +43,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
     }
 
     setIsSubmitting(true);
+    setEmailStatus({ status: 'sending' });
+
     setTimeout(() => {
       const order = placeOrder({
         customerName: formData.customerName.trim(),
@@ -51,8 +54,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
         city: `${formData.city}`,
         paymentMethod: formData.paymentMethod,
       });
+
       setCompletedOrder(order);
       setIsSubmitting(false);
+
+      // Trigger automatic server-side email dispatch
+      sendOrderEmailToServer(order).then((res) => {
+        if (res.success) {
+          setEmailStatus({ status: 'sent', previewUrl: res.previewUrl });
+        } else {
+          setEmailStatus({ status: 'error' });
+        }
+      });
     }, 500);
   };
 
@@ -175,34 +188,66 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               </div>
             </div>
 
-            {/* Direct Channel Viewers for Customer */}
-            {(() => {
-              const notif = triggerOrderNumberNotification(completedOrder);
-              return (
-                <div className="max-w-md mx-auto pt-1 flex flex-wrap gap-2 justify-center">
-                  <a
-                    href={notif.whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-300 text-[11px] font-semibold transition-colors"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    <span>View WhatsApp Dispatch</span>
-                  </a>
-                  {completedOrder.email && (
+            {/* Live Delivery Status & Direct Channel Action */}
+            <div className="max-w-md mx-auto space-y-3 pt-1">
+              {emailStatus.status === 'sending' && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                  <span>Dispatching Order Confirmation Email to {completedOrder.email || 'customer inbox'}...</span>
+                </div>
+              )}
+              {emailStatus.status === 'sent' && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    Confirmation Email Dispatched Successfully!
+                  </span>
+                  {emailStatus.previewUrl && (
                     <a
-                      href={notif.gmailUrl || notif.mailtoUrl}
+                      href={emailStatus.previewUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-700 hover:bg-red-100 border border-red-300 text-[11px] font-semibold transition-colors"
+                      className="text-xs underline font-bold text-emerald-700 flex items-center gap-1"
                     >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>View Gmail Dispatch</span>
+                      <span>Preview Email</span>
+                      <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
                 </div>
-              );
-            })()}
+              )}
+
+              {/* Instant WhatsApp & Gmail Actions */}
+              {(() => {
+                const notif = triggerOrderNumberNotification(completedOrder);
+                return (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-neutral-600 text-center">
+                      Instant Receipt & Message Access
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <a
+                        href={notif.whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-900/20 transition-all text-center cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Open WhatsApp Message</span>
+                      </a>
+                      <a
+                        href={notif.gmailUrl || notif.mailtoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-md shadow-red-900/20 transition-all text-center cursor-pointer"
+                      >
+                        <Mail className="w-4 h-4" />
+                        <span>Open in Gmail</span>
+                      </a>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
 
             <div className="pt-2 text-center">
               <button

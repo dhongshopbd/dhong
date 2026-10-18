@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { Invoice } from '../../types';
 import { formatBDT } from '../../utils/currency';
-import { triggerInvoiceNumberNotification } from '../../utils/notifications';
+import { triggerInvoiceNumberNotification, sendInvoiceEmailToServer } from '../../utils/notifications';
 import { OrderInvoiceModal } from './OrderInvoiceModal';
 import {
   FileText,
@@ -304,34 +304,56 @@ export const InvoicesManager: React.FC = () => {
                     </div>
 
                     {/* Send WhatsApp Button */}
-                    <button
-                      onClick={() => handleSendWhatsApp(inv)}
-                      className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                        inv.whatsappSentAt
-                          ? 'bg-emerald-950/70 border border-emerald-600/50 text-emerald-400 hover:bg-emerald-900'
-                          : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
-                      }`}
-                      title={inv.whatsappSentAt ? `Sent on ${new Date(inv.whatsappSentAt).toLocaleTimeString()} - Click to resend` : 'Send Invoice # via WhatsApp'}
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">{inv.whatsappSentAt ? 'WhatsApp Sent' : 'Send WhatsApp'}</span>
-                    </button>
+                    {(() => {
+                      const notif = triggerInvoiceNumberNotification(inv);
+                      return (
+                        <a
+                          href={notif.whatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            markInvoiceSent(inv.id, 'whatsapp');
+                            showNotice(`Invoice ${inv.id} dispatched via WhatsApp to ${inv.phone}`);
+                          }}
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                            inv.whatsappSentAt
+                              ? 'bg-emerald-950/70 border border-emerald-600/50 text-emerald-400 hover:bg-emerald-900'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
+                          }`}
+                          title={inv.whatsappSentAt ? `Sent on ${new Date(inv.whatsappSentAt).toLocaleTimeString()} - Click to resend` : 'Send Invoice # via WhatsApp'}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">{inv.whatsappSentAt ? 'WhatsApp Sent' : 'Send WhatsApp'}</span>
+                        </a>
+                      );
+                    })()}
 
                     {/* Send Gmail Button */}
-                    {inv.email && (
-                      <button
-                        onClick={() => handleSendGmail(inv)}
-                        className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                          inv.emailSentAt
-                            ? 'bg-red-950/70 border border-red-600/50 text-red-300 hover:bg-red-900'
-                            : 'bg-red-600 hover:bg-red-500 text-white shadow-sm'
-                        }`}
-                        title={inv.emailSentAt ? `Sent on ${new Date(inv.emailSentAt).toLocaleTimeString()} - Click to resend` : 'Send Invoice # via Gmail'}
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">{inv.emailSentAt ? 'Gmail Sent' : 'Send Gmail'}</span>
-                      </button>
-                    )}
+                    {inv.email && (() => {
+                      const notif = triggerInvoiceNumberNotification(inv);
+                      const targetUrl = notif.gmailUrl || notif.mailtoUrl;
+                      return (
+                        <a
+                          href={targetUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => {
+                            markInvoiceSent(inv.id, 'email');
+                            sendInvoiceEmailToServer(inv);
+                            showNotice(`Invoice ${inv.id} dispatched to ${inv.email}`);
+                          }}
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                            inv.emailSentAt
+                              ? 'bg-red-950/70 border border-red-600/50 text-red-300 hover:bg-red-900'
+                              : 'bg-red-600 hover:bg-red-500 text-white shadow-sm'
+                          }`}
+                          title={inv.emailSentAt ? `Sent on ${new Date(inv.emailSentAt).toLocaleTimeString()} - Click to resend` : 'Send Invoice # via Gmail'}
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">{inv.emailSentAt ? 'Gmail Sent' : 'Send Gmail'}</span>
+                        </a>
+                      );
+                    })()}
 
                     {/* View / Print Invoice */}
                     <button

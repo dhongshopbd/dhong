@@ -132,6 +132,28 @@ export function triggerOrderNumberNotification(order: CustomerOrder) {
 }
 
 /**
+ * Sends Order Number email via backend server
+ */
+export async function sendOrderEmailToServer(order: CustomerOrder): Promise<{ success: boolean; previewUrl?: string; error?: string }> {
+  try {
+    const res = await fetch('/api/notifications/send-order-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err.error || 'Server error' };
+    }
+    const data = await res.json();
+    return { success: true, previewUrl: data.previewUrl };
+  } catch (err: any) {
+    console.warn('Backend order email dispatch error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Dispatches Invoice Number notification to customer
  */
 export function triggerInvoiceNumberNotification(invoice: Invoice) {
@@ -151,4 +173,71 @@ export function triggerInvoiceNumberNotification(invoice: Invoice) {
     text,
     subject,
   };
+}
+
+/**
+ * Sends Invoice Number email via backend server
+ */
+export async function sendInvoiceEmailToServer(invoice: Invoice, order?: CustomerOrder): Promise<{ success: boolean; previewUrl?: string; error?: string }> {
+  try {
+    const res = await fetch('/api/notifications/send-invoice-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoice, order }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err.error || 'Server error' };
+    }
+    const data = await res.json();
+    return { success: true, previewUrl: data.previewUrl };
+  } catch (err: any) {
+    console.warn('Backend invoice email dispatch error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Fetch Gateway Status from Server
+ */
+export async function fetchGatewayStatus() {
+  try {
+    const res = await fetch('/api/notifications/status');
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Send Test Email from Gateway
+ */
+export async function sendTestEmailGateway(targetEmail: string) {
+  try {
+    const res = await fetch('/api/notifications/test-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetEmail }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Save Gateway Configuration to Server
+ */
+export async function saveGatewayConfig(payload: any) {
+  try {
+    const res = await fetch('/api/notifications/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
 }

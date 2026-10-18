@@ -2,7 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { useStore } from '../../context/StoreContext';
 import { CustomerOrder, DressSize, Invoice } from '../../types';
 import { formatBDT } from '../../utils/currency';
-import { triggerOrderNumberNotification, triggerInvoiceNumberNotification } from '../../utils/notifications';
+import {
+  triggerOrderNumberNotification,
+  triggerInvoiceNumberNotification,
+  sendInvoiceEmailToServer,
+  sendOrderEmailToServer,
+} from '../../utils/notifications';
 import { OrderInvoiceModal } from './OrderInvoiceModal';
 import {
   ShoppingBag,
@@ -487,11 +492,12 @@ export const OrdersManager: React.FC = () => {
                           const res = confirmOrderAndCreateInvoice(order.id);
                           if (res) {
                             setConfirmedSuccessModal(res);
-                            showToast(`Order ${order.id} confirmed! Invoice ${res.invoice.id} saved to database.`);
+                            showToast(`Order ${order.id} confirmed! Invoice ${res.invoice.id} saved & dispatched.`);
+                            sendInvoiceEmailToServer(res.invoice, res.order);
                           }
                         }}
                         className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-950 transition-all cursor-pointer"
-                        title="Confirm order and generate official invoice"
+                        title="Confirm order, save official invoice, and dispatch email"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Confirm & Save Invoice</span>
@@ -575,79 +581,91 @@ export const OrdersManager: React.FC = () => {
                       </a>
 
                       {/* WhatsApp Dispatches */}
-                      {order.invoiceId ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const inv = getInvoiceByOrderId(order.id);
-                            if (inv) {
+                      {order.invoiceId ? (() => {
+                        const inv = getInvoiceByOrderId(order.id);
+                        if (!inv) return null;
+                        const notif = triggerInvoiceNumberNotification(inv);
+                        return (
+                          <a
+                            href={notif.whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => {
                               markInvoiceSent(inv.id, 'whatsapp');
-                              const notif = triggerInvoiceNumberNotification(inv);
                               showToast(`Invoice ${inv.id} dispatched via WhatsApp to ${order.phone}`);
-                              window.open(notif.whatsappUrl, '_blank', 'noopener,noreferrer');
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 hover:bg-emerald-900 border border-emerald-800/60 text-[11px] font-medium cursor-pointer"
-                          title="Send official Invoice Number to WhatsApp"
-                        >
-                          <MessageCircle className="w-3 h-3" />
-                          <span>WhatsApp Invoice #</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            markOrderNumberSent(order.id, 'whatsapp');
-                            const notif = triggerOrderNumberNotification(order);
-                            showToast(`Order Number ${order.id} sent via WhatsApp to ${order.phone}`);
-                            window.open(notif.whatsappUrl, '_blank', 'noopener,noreferrer');
-                          }}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-emerald-400 text-[11px] font-medium cursor-pointer"
-                          title="Send Order Number to customer via WhatsApp"
-                        >
-                          <MessageCircle className="w-3 h-3" />
-                          <span>WhatsApp Order #</span>
-                        </button>
-                      )}
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 hover:bg-emerald-900 border border-emerald-800/60 text-[11px] font-medium cursor-pointer"
+                            title="Send official Invoice Number to WhatsApp"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                            <span>WhatsApp Invoice #</span>
+                          </a>
+                        );
+                      })() : (() => {
+                        const notif = triggerOrderNumberNotification(order);
+                        return (
+                          <a
+                            href={notif.whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => {
+                              markOrderNumberSent(order.id, 'whatsapp');
+                              showToast(`Order Number ${order.id} sent via WhatsApp to ${order.phone}`);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-emerald-400 text-[11px] font-medium cursor-pointer"
+                            title="Send Order Number to customer via WhatsApp"
+                          >
+                            <MessageCircle className="w-3 h-3" />
+                            <span>WhatsApp Order #</span>
+                          </a>
+                        );
+                      })()}
 
                       {/* Gmail Dispatches */}
                       {order.email && (
-                        order.invoiceId ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const inv = getInvoiceByOrderId(order.id);
-                              if (inv) {
+                        order.invoiceId ? (() => {
+                          const inv = getInvoiceByOrderId(order.id);
+                          if (!inv) return null;
+                          const notif = triggerInvoiceNumberNotification(inv);
+                          const targetUrl = notif.gmailUrl || notif.mailtoUrl;
+                          return (
+                            <a
+                              href={targetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => {
                                 markInvoiceSent(inv.id, 'email');
-                                const notif = triggerInvoiceNumberNotification(inv);
-                                showToast(`Invoice ${inv.id} sent via Gmail to ${order.email}`);
-                                const targetUrl = notif.gmailUrl || notif.mailtoUrl;
-                                if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-950 text-red-300 hover:bg-red-900 border border-red-800/60 text-[11px] font-medium cursor-pointer"
-                            title="Send Invoice Number to Gmail"
-                          >
-                            <Mail className="w-3 h-3" />
-                            <span>Gmail Invoice #</span>
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              markOrderNumberSent(order.id, 'email');
-                              const notif = triggerOrderNumberNotification(order);
-                              showToast(`Order Number ${order.id} sent via Gmail to ${order.email}`);
-                              const targetUrl = notif.gmailUrl || notif.mailtoUrl;
-                              if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                            }}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-red-400 text-[11px] font-medium cursor-pointer"
-                            title="Send Order Number via Gmail"
-                          >
-                            <Mail className="w-3 h-3" />
-                            <span>Gmail Order #</span>
-                          </button>
-                        )
+                                sendInvoiceEmailToServer(inv, order);
+                                showToast(`Invoice ${inv.id} dispatched to ${order.email}`);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-950 text-red-300 hover:bg-red-900 border border-red-800/60 text-[11px] font-medium cursor-pointer"
+                              title="Send Invoice Number to Gmail"
+                            >
+                              <Mail className="w-3 h-3" />
+                              <span>Gmail Invoice #</span>
+                            </a>
+                          );
+                        })() : (() => {
+                          const notif = triggerOrderNumberNotification(order);
+                          const targetUrl = notif.gmailUrl || notif.mailtoUrl;
+                          return (
+                            <a
+                              href={targetUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => {
+                                markOrderNumberSent(order.id, 'email');
+                                sendOrderEmailToServer(order);
+                                showToast(`Order Number ${order.id} sent via Gmail to ${order.email}`);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-red-400 text-[11px] font-medium cursor-pointer"
+                              title="Send Order Number via Gmail"
+                            >
+                              <Mail className="w-3 h-3" />
+                              <span>Gmail Order #</span>
+                            </a>
+                          );
+                        })()
                       )}
                     </div>
                   </div>
@@ -1003,31 +1021,35 @@ export const OrdersManager: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <button
+                  <a
+                    href={notif.whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => {
                       markInvoiceSent(invoice.id, 'whatsapp');
                       showToast(`Invoice ${invoice.id} dispatched to WhatsApp (${order.phone})`);
-                      window.open(notif.whatsappUrl, '_blank', 'noopener,noreferrer');
                     }}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>Send via WhatsApp</span>
-                  </button>
+                  </a>
 
                   {order.email ? (
-                    <button
+                    <a
+                      href={notif.gmailUrl || notif.mailtoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => {
                         markInvoiceSent(invoice.id, 'email');
-                        showToast(`Invoice ${invoice.id} prepared for Gmail (${order.email})`);
-                        const targetUrl = notif.gmailUrl || notif.mailtoUrl;
-                        if (targetUrl) window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                        sendInvoiceEmailToServer(invoice, order);
+                        showToast(`Invoice ${invoice.id} dispatched to Gmail (${order.email})`);
                       }}
                       className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
                     >
                       <Mail className="w-4 h-4" />
                       <span>Send via Gmail</span>
-                    </button>
+                    </a>
                   ) : (
                     <div className="flex items-center justify-center px-3 py-2 rounded-xl bg-neutral-100 text-neutral-400 text-xs italic">
                       No Email Provided

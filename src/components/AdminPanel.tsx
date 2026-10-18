@@ -21,11 +21,15 @@ import {
   Sparkles,
   Tag,
   FileText,
+  Bell,
 } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
 import { OrdersManager } from './admin/OrdersManager';
 import { CategoriesManager } from './admin/CategoriesManager';
 import { InvoicesManager } from './admin/InvoicesManager';
+import { NotificationGatewayManager } from './admin/NotificationGatewayManager';
+import { uploadImageToStorage } from '../utils/firebase';
+import { Upload, Database, CloudCheck, Loader2 } from 'lucide-react';
 
 export const AdminPanel: React.FC = () => {
   const {
@@ -39,11 +43,22 @@ export const AdminPanel: React.FC = () => {
     logoutAdmin,
     setCurrentView,
     resetToSampleProducts,
+    isProductsLoading,
+    firestoreError,
+    isFirebaseActive,
+    firebaseUser,
+    isFirebaseAdmin,
+    adminEmail,
+    migrateLocalDataToFirestore,
+    refreshProductsFromDb,
   } = useStore();
 
-  const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'invoices' | 'categories' | 'metrics'>('products');
+  const [activeTab, setActiveTab] = useState<'upload' | 'products' | 'orders' | 'invoices' | 'categories' | 'gateway' | 'metrics'>('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   // Global toast notification
   const [globalToast, setGlobalToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -151,13 +166,57 @@ export const AdminPanel: React.FC = () => {
     showToast(`Saved changes for "${savedName}"! Website updated automatically.`);
   };
 
-  // Confirm delete product
-  const handleConfirmDelete = () => {
+  // Confirm delete product (Firestore-verified deletion)
+  const handleConfirmDelete = async () => {
     if (!productToDelete) return;
     const pName = productToDelete.name;
-    deleteProduct(productToDelete.id);
-    setProductToDelete(null);
-    showToast(`"${pName}" deleted from storefront and database.`);
+    const pId = productToDelete.id;
+    setIsDeleting(true);
+    try {
+      const ok = await deleteProduct(pId);
+      if (ok) {
+        setProductToDelete(null);
+        showToast(`"${pName}" permanently deleted from storefront and Cloud Firestore.`, 'success');
+      } else {
+        showToast(`Could not delete "${pName}". Please verify admin permissions.`, 'error');
+      }
+    } catch (err: any) {
+      console.error('Delete error in admin panel:', err);
+      showToast(`Delete failed: ${err.message || 'Permission denied or network issue'}`, 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Image File Upload to Firebase Storage
+  const handleImageFileUpload = async (file: File) => {
+    setIsUploadingImage(true);
+    try {
+      const url = await uploadImageToStorage(file);
+      setImageUrl(url);
+      showToast('Image uploaded successfully to Firebase Storage!', 'success');
+    } catch (err: any) {
+      console.warn('Storage upload error:', err);
+      showToast(err.message || 'Image upload error. Please paste a direct image URL.', 'error');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  // Migration from local / initial data to Firestore
+  const handleMigrateToFirestore = async () => {
+    setIsMigrating(true);
+    try {
+      const res = await migrateLocalDataToFirestore();
+      showToast(
+        `Migration complete! ${res.migratedCount} products saved to Firestore (${res.skippedCount} already existed). Total in database: ${res.totalInFirestore}.`,
+        'success'
+      );
+    } catch (err: any) {
+      showToast(`Migration error: ${err.message || 'Check Firestore permissions'}`, 'error');
+    } finally {
+      setIsMigrating(false);
+    }
   };
 
   // Filtered admin products list
@@ -214,9 +273,15 @@ export const AdminPanel: React.FC = () => {
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-[#e32117] text-white">
                     ADMIN
                   </span>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
+                    isFirebaseActive ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : 'bg-amber-950/80 text-amber-400 border border-amber-800/60'
+                  }`}>
+                    <Database className="w-3 h-3" />
+                    <span>{isFirebaseActive ? 'Firestore Connected' : 'DB Standby'}</span>
+                  </span>
                 </div>
-                <div className="text-[10px] text-red-400 font-medium tracking-wider">
-                  Come meet the new you • Live Database Console
+                <div className="text-[10px] text-neutral-400 font-medium tracking-wider">
+                  Admin: <span className="text-red-400">{firebaseUser?.email || adminEmail}</span> • Permanent Database
                 </div>
               </div>
             </div>
@@ -306,6 +371,18 @@ export const AdminPanel: React.FC = () => {
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Saved Invoices ({invoices.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('gateway')}
+              className={`px-3.5 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                activeTab === 'gateway'
+                  ? 'bg-[#e32117] text-white shadow-md shadow-red-600/20'
+                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span>Notification Gateway</span>
             </button>
 
             <button
@@ -478,15 +555,15 @@ export const AdminPanel: React.FC = () => {
                 </div>
               </div>
 
-              {/* Image URL Address Input with Live Preview */}
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-neutral-300 mb-1.5 font-semibold flex items-center justify-between">
-                  <span>Image Address Link URL *</span>
+              {/* Image URL Address Input & Firebase Storage File Upload with Live Preview */}
+              <div className="space-y-3">
+                <label className="block text-xs uppercase tracking-wider text-neutral-300 font-semibold flex items-center justify-between">
+                  <span>Product Image *</span>
                   <span className="text-[10px] text-neutral-400 lowercase font-normal">
-                    (Paste direct web link or Unsplash photo)
+                    (Upload image file to Firebase Storage or paste address URL)
                   </span>
                 </label>
-                <div className="flex gap-3 items-center">
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                   <div className="relative flex-1">
                     <ImageIcon className="w-4 h-4 text-neutral-500 absolute left-3.5 top-3" />
                     <input
@@ -498,11 +575,32 @@ export const AdminPanel: React.FC = () => {
                       className="w-full bg-neutral-950 border border-neutral-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:border-red-500"
                     />
                   </div>
+
+                  {/* Firebase Storage File Upload Button */}
+                  <label className="px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-xs font-semibold text-neutral-200 flex items-center justify-center gap-2 cursor-pointer transition-all shrink-0">
+                    {isUploadingImage ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                    ) : (
+                      <Upload className="w-4 h-4 text-red-500" />
+                    )}
+                    <span>{isUploadingImage ? 'Uploading Image...' : 'Upload Image File'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingImage}
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageFileUpload(file);
+                      }}
+                    />
+                  </label>
+
                   {imageUrl && (
                     <img
                       src={imageUrl}
                       alt="Preview"
-                      className="w-10 h-12 object-cover rounded-lg border border-neutral-800 shrink-0"
+                      className="w-10 h-12 object-cover rounded-lg border border-neutral-800 shrink-0 self-center"
                     />
                   )}
                 </div>
@@ -616,6 +714,16 @@ export const AdminPanel: React.FC = () => {
                 </div>
 
                 <button
+                  onClick={handleMigrateToFirestore}
+                  disabled={isMigrating}
+                  className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-emerald-400 text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  title="Safely migrate local products to Cloud Firestore without duplicates"
+                >
+                  {isMigrating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+                  <span>{isMigrating ? 'Migrating...' : 'Sync to Firestore'}</span>
+                </button>
+
+                <button
                   onClick={resetToSampleProducts}
                   className="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                   title="Reset to default Bangladesh couture collection"
@@ -626,23 +734,48 @@ export const AdminPanel: React.FC = () => {
               </div>
             </div>
 
-            {/* Inventory Table */}
+            {/* Inventory Table with Loading and Empty States */}
             <div className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-neutral-950/80 border-b border-neutral-800 text-neutral-400 uppercase tracking-wider text-[10px]">
-                    <tr>
-                      <th className="py-3.5 px-4">Dress</th>
-                      <th className="py-3.5 px-4">Category</th>
-                      <th className="py-3.5 px-4">Sizes</th>
-                      <th className="py-3.5 px-4">Price (BDT)</th>
-                      <th className="py-3.5 px-4">Status</th>
-                      <th className="py-3.5 px-4 text-right">Actions (Edit / Delete)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-800/80">
-                    {filteredAdminProducts.map((p) => (
-                      <tr key={p.id} className="hover:bg-neutral-850/50 transition-colors">
+              {isProductsLoading ? (
+                <div className="p-12 text-center text-neutral-400 space-y-3">
+                  <Loader2 className="w-6 h-6 animate-spin text-red-500 mx-auto" />
+                  <p className="text-xs">Fetching live inventory from Cloud Firestore database...</p>
+                </div>
+              ) : filteredAdminProducts.length === 0 ? (
+                <div className="p-12 text-center text-neutral-400 space-y-4">
+                  <Package className="w-10 h-10 text-neutral-600 mx-auto" />
+                  <div>
+                    <h4 className="text-sm font-bold text-neutral-200">No dresses found</h4>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      {adminSearch ? 'No dresses match your search criteria.' : 'Your Firestore database is ready. Add a dress or click "Sync to Firestore" to migrate sample collection.'}
+                    </p>
+                  </div>
+                  {!adminSearch && (
+                    <button
+                      onClick={handleMigrateToFirestore}
+                      className="px-4 py-2 rounded-xl bg-[#e32117] text-white text-xs font-bold hover:bg-red-700 transition-all cursor-pointer inline-flex items-center gap-2"
+                    >
+                      <Database className="w-3.5 h-3.5" />
+                      <span>Sync Initial Collection to Firestore</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-neutral-950/80 border-b border-neutral-800 text-neutral-400 uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="py-3.5 px-4">Dress</th>
+                        <th className="py-3.5 px-4">Category</th>
+                        <th className="py-3.5 px-4">Sizes</th>
+                        <th className="py-3.5 px-4">Price (BDT)</th>
+                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-4 text-right">Actions (Edit / Delete)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-800/80">
+                      {filteredAdminProducts.map((p) => (
+                        <tr key={p.id} className="hover:bg-neutral-850/50 transition-colors">
                         
                         {/* Dress Image & Info */}
                         <td className="py-3 px-4">
@@ -728,6 +861,7 @@ export const AdminPanel: React.FC = () => {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
           </div>
         )}
@@ -740,6 +874,9 @@ export const AdminPanel: React.FC = () => {
 
         {/* TAB 4: DYNAMIC CATEGORIES MANAGEMENT */}
         {activeTab === 'categories' && <CategoriesManager />}
+
+        {/* TAB: NOTIFICATION & EMAIL GATEWAY */}
+        {activeTab === 'gateway' && <NotificationGatewayManager />}
 
         {/* TAB 5: STORE METRICS */}
         {activeTab === 'metrics' && (
@@ -919,24 +1056,52 @@ export const AdminPanel: React.FC = () => {
                 </div>
               </div>
 
-              {/* Image URL & Preview */}
-              <div>
-                <label className="block text-neutral-300 uppercase tracking-wider mb-1 font-semibold">
-                  Image Address Link URL *
+              {/* Image URL & File Upload to Firebase Storage */}
+              <div className="space-y-2">
+                <label className="block text-neutral-300 uppercase tracking-wider font-semibold">
+                  Product Image * (URL or Upload File to Firebase Storage)
                 </label>
-                <div className="flex gap-3 items-center">
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                   <input
                     type="url"
                     required
                     value={editingProduct.imageUrl}
                     onChange={(e) => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
                     className="flex-1 bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-neutral-100 focus:border-red-500 focus:outline-none"
+                    placeholder="https://..."
                   />
+
+                  <label className="px-3.5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-750 border border-neutral-700 text-xs font-semibold text-neutral-200 flex items-center justify-center gap-2 cursor-pointer transition-all shrink-0">
+                    {isUploadingImage ? <Loader2 className="w-4 h-4 animate-spin text-red-500" /> : <Upload className="w-4 h-4 text-red-500" />}
+                    <span>{isUploadingImage ? 'Uploading...' : 'Replace Image'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploadingImage}
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setIsUploadingImage(true);
+                          try {
+                            const url = await uploadImageToStorage(file);
+                            setEditingProduct({ ...editingProduct, imageUrl: url });
+                            showToast('New image uploaded to Firebase Storage!', 'success');
+                          } catch (err: any) {
+                            showToast(err.message || 'Image upload error', 'error');
+                          } finally {
+                            setIsUploadingImage(false);
+                          }
+                        }
+                      }}
+                    />
+                  </label>
+
                   {editingProduct.imageUrl && (
                     <img
                       src={editingProduct.imageUrl}
                       alt="Preview"
-                      className="w-12 h-14 object-cover rounded-lg border border-neutral-800 shrink-0"
+                      className="w-12 h-14 object-cover rounded-lg border border-neutral-800 shrink-0 self-center"
                     />
                   )}
                 </div>
@@ -1050,17 +1215,21 @@ export const AdminPanel: React.FC = () => {
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-800">
               <button
                 type="button"
+                disabled={isDeleting}
                 onClick={() => setProductToDelete(null)}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
+                id="admin-confirm-delete-btn"
+                disabled={isDeleting}
                 onClick={handleConfirmDelete}
-                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-lg shadow-red-600/30 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-lg shadow-red-600/30 cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
-                Confirm Delete
+                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>{isDeleting ? 'Deleting from Firestore...' : 'Confirm Delete'}</span>
               </button>
             </div>
           </div>

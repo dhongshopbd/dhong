@@ -15,6 +15,30 @@ import {
   LEGACY_DUMMY_ORDER_IDS,
   LEGACY_DUMMY_INVOICE_IDS,
 } from '../utils/db';
+import {
+  fetchProductsFromFirestore,
+  createProductInFirestore,
+  updateProductInFirestore,
+  deleteProductFromFirestore,
+  migrateLocalProductsToFirestore,
+  fetchCategoriesFromFirestore,
+  saveCategoryToFirestore,
+  deleteCategoryFromFirestore,
+  saveOrderToFirestore,
+  fetchOrdersFromFirestore,
+  updateOrderInFirestore,
+  deleteOrderFromFirestore,
+  saveInvoiceToFirestore,
+  fetchInvoicesFromFirestore,
+  auth,
+  isUserAdmin,
+  signInAdminWithGoogle,
+  signOutAdmin,
+  isFirebaseConfigured,
+  testFirestoreConnection,
+  ADMIN_EMAIL,
+} from '../utils/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 
 interface StoreContextType {
   products: Product[];
@@ -30,6 +54,17 @@ interface StoreContextType {
   currentView: 'store' | 'admin';
   filteredProducts: Product[];
   allTags: string[];
+
+  // Firebase Firestore & Auth integration state
+  isProductsLoading: boolean;
+  firestoreError: string | null;
+  isFirebaseActive: boolean;
+  firebaseUser: User | null;
+  isFirebaseAdmin: boolean;
+  adminEmail: string;
+  loginAdminWithGoogle: () => Promise<boolean>;
+  migrateLocalDataToFirestore: () => Promise<{ migratedCount: number; skippedCount: number; totalInFirestore: number }>;
+  refreshProductsFromDb: () => Promise<void>;
   
   // Actions
   setSelectedProduct: (product: Product | null) => void;
@@ -81,7 +116,7 @@ interface StoreContextType {
   logoutAdmin: () => void;
   addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Product;
   updateProduct: (id: string, updates: Partial<Product>) => void;
-  deleteProduct: (id: string) => void;
+  deleteProduct: (id: string) => Promise<boolean>;
   updateOrderStatus: (orderId: string, status: CustomerOrder['status']) => void;
   deleteOrder: (orderId: string) => void;
   addManualOrder: (order: Omit<CustomerOrder, 'id' | 'createdAt'>) => CustomerOrder;
@@ -135,20 +170,66 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Invoices state with dual persistence (Only generated and saved upon order confirmation)
   const [invoices, setInvoices] = useState<Invoice[]>(loadInitialInvoices);
 
-  // Deep hydration from IndexedDB on startup
+  // Firebase Firestore & Authentication state
+  const [isProductsLoading, setIsProductsLoading] = useState<boolean>(true);
+  const [firestoreError, setFirestoreError] = useState<string | null>(null);
+  const [isFirebaseActive, setIsFirebaseActive] = useState<boolean>(isFirebaseConfigured);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [isFirebaseAdmin, setIsFirebaseAdmin] = useState<boolean>(false);
+
+  // Deep hydration from Firestore and IndexedDB on startup
   useEffect(() => {
-    idbGet<Product[]>('dhong_products_v3').then((idbProds) => {
-      if (Array.isArray(idbProds) && idbProds.length > 0) {
-        setProducts(idbProds);
-      }
+    let isMounted = true;
+
+    // 1. Test connection to Cloud Firestore
+    testFirestoreConnection().then((connected) => {
+      if (isMounted) setIsFirebaseActive(connected);
     });
-    idbGet<string[]>('dhong_categories_v3').then((idbCats) => {
-      if (Array.isArray(idbCats) && idbCats.length > 0) {
-        setCategories(idbCats);
-      }
-    });
+
+    // 2. Fetch products permanently from Cloud Firestore
+    setIsProductsLoading(true);
+    fetchProductsFromFirestore()
+      .then((firestoreProducts) => {
+        if (!isMounted) return;
+        if (firestoreProducts && firestoreProducts.length > 0) {
+          setProducts(firestoreProducts);
+          persistProducts(firestoreProducts);
+          setFirestoreError(null);
+        } else {
+          // Collection is kept empty unless the user adds a dress
+          setProducts([]);
+          persistProducts([]);
+        }
+      })
+      .catch((err: any) => {
+        if (!isMounted) return;
+        console.warn('Could not read from Firestore:', err);
+        setFirestoreError(err?.message || 'Firestore connection notice');
+        setProducts([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsProductsLoading(false);
+      });
+
+    // 3. Hydrate Categories from Firestore
+    fetchCategoriesFromFirestore()
+      .then((dbCats) => {
+        if (isMounted && dbCats && dbCats.length > 0) {
+          setCategories(dbCats);
+          persistCategories(dbCats);
+        } else {
+          idbGet<string[]>('dhong_categories_v3').then((idbCats) => {
+            if (isMounted && Array.isArray(idbCats) && idbCats.length > 0) {
+              setCategories(idbCats);
+            }
+          });
+        }
+      })
+      .catch(() => {});
+
+    // 4. Hydrate local orders and invoices
     idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
-      if (Array.isArray(idbOrders)) {
+      if (isMounted && Array.isArray(idbOrders)) {
         const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
         setOrders(realOrders);
         if (realOrders.length !== idbOrders.length) {
@@ -156,8 +237,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
     });
+
     idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
-      if (Array.isArray(idbInvoices)) {
+      if (isMounted && Array.isArray(idbInvoices)) {
         const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
         setInvoices(realInvoices);
         if (realInvoices.length !== idbInvoices.length) {
@@ -165,6 +247,42 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       }
     });
+
+    // 5. Listen for Firebase Auth state changes
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (!isMounted) return;
+        setFirebaseUser(user);
+        if (user) {
+          const admin = isUserAdmin(user);
+          setIsFirebaseAdmin(admin);
+          if (admin) {
+            setIsAdminLoggedIn(true);
+            try {
+              localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+            } catch {}
+            // Admin can also fetch protected customer orders and invoices
+            fetchOrdersFromFirestore().then((dbOrders) => {
+              if (isMounted && dbOrders && dbOrders.length > 0) setOrders(dbOrders);
+            }).catch(() => {});
+            fetchInvoicesFromFirestore().then((dbInvs) => {
+              if (isMounted && dbInvs && dbInvs.length > 0) setInvoices(dbInvs);
+            }).catch(() => {});
+          }
+        } else {
+          setIsFirebaseAdmin(false);
+        }
+      });
+
+      return () => {
+        isMounted = false;
+        unsubscribe();
+      };
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Filters state
@@ -429,6 +547,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setOrders(nextOrders);
     persistOrders(nextOrders);
     clearCart();
+
+    // Persist order permanently in Cloud Firestore
+    saveOrderToFirestore(newOrder).catch((err) => {
+      console.warn('Firestore order save info:', err);
+    });
+
     return newOrder;
   };
 
@@ -535,8 +659,34 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return false;
   };
 
+  const loginAdminWithGoogle = async (): Promise<boolean> => {
+    try {
+      const user = await signInAdminWithGoogle();
+      const admin = isUserAdmin(user);
+      setFirebaseUser(user);
+      setIsFirebaseAdmin(admin);
+      if (admin) {
+        setIsAdminLoggedIn(true);
+        try {
+          localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+          sessionStorage.setItem(ADMIN_AUTH_KEY, 'true');
+        } catch {}
+        return true;
+      } else {
+        throw new Error(
+          `Signed in as ${user.email}, but this account is not in the authorized administrator list (${ADMIN_EMAIL}).`
+        );
+      }
+    } catch (err: any) {
+      console.error('Google admin login error:', err);
+      throw err;
+    }
+  };
+
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
+    setIsFirebaseAdmin(false);
+    signOutAdmin().catch(() => {});
     try {
       localStorage.removeItem(ADMIN_AUTH_KEY);
       sessionStorage.removeItem(ADMIN_AUTH_KEY);
@@ -546,11 +696,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     handleSetCurrentView('store');
   };
 
-  // Product management (Upload, Edit, Delete)
+  // Product management (Upload, Edit, Delete) with permanent Firestore synchronization
   const addProduct = (productData: Omit<Product, 'id' | 'createdAt'>): Product => {
     const cat = productData.category.trim();
     if (cat && !categories.some((c) => c.toLowerCase() === cat.toLowerCase())) {
       addCategory(cat);
+      saveCategoryToFirestore(cat).catch(() => {});
     }
     const newProduct: Product = {
       ...productData,
@@ -561,6 +712,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nextProds = [newProduct, ...products];
     setProducts(nextProds);
     persistProducts(nextProds);
+
+    // Save permanently to Cloud Firestore
+    createProductInFirestore(newProduct).catch((err) => {
+      console.error('Failed to create product in Firestore:', err);
+    });
+
     return newProduct;
   };
 
@@ -569,20 +726,70 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const cat = updates.category.trim();
       if (cat && !categories.some((c) => c.toLowerCase() === cat.toLowerCase())) {
         addCategory(cat);
+        saveCategoryToFirestore(cat).catch(() => {});
       }
     }
     const nextProds = products.map((p) => (p.id === id ? { ...p, ...updates } : p));
     setProducts(nextProds);
     persistProducts(nextProds);
+
+    // Save permanently to Cloud Firestore
+    updateProductInFirestore(id, updates).catch((err) => {
+      console.error('Failed to update product in Firestore:', err);
+    });
   };
 
-  const deleteProduct = (id: string) => {
-    const nextProds = products.filter((p) => p.id !== id);
-    setProducts(nextProds);
-    persistProducts(nextProds);
-    setCart((prev) => prev.filter((item) => item.product.id !== id));
-    if (selectedProduct?.id === id) {
-      setSelectedProduct(null);
+  const deleteProduct = async (id: string): Promise<boolean> => {
+    try {
+      // 1. Delete document from Firestore
+      await deleteProductFromFirestore(id);
+
+      // 2. Remove product from UI and local storage ONLY after deletion succeeds
+      const nextProds = products.filter((p) => p.id !== id);
+      setProducts(nextProds);
+      await persistProducts(nextProds);
+      setCart((prev) => prev.filter((item) => item.product.id !== id));
+      if (selectedProduct?.id === id) {
+        setSelectedProduct(null);
+      }
+      return true;
+    } catch (err: any) {
+      console.error('Failed to delete product from Firestore:', err);
+      // If offline or Firestore not initialized, clean up locally
+      if (!isFirebaseConfigured || err?.message?.includes('offline')) {
+        const nextProds = products.filter((p) => p.id !== id);
+        setProducts(nextProds);
+        await persistProducts(nextProds);
+        setCart((prev) => prev.filter((item) => item.product.id !== id));
+        return true;
+      }
+      throw err;
+    }
+  };
+
+  const migrateLocalDataToFirestore = async () => {
+    const res = await migrateLocalProductsToFirestore(products);
+    const updated = await fetchProductsFromFirestore();
+    if (updated && updated.length > 0) {
+      setProducts(updated);
+      await persistProducts(updated);
+    }
+    return res;
+  };
+
+  const refreshProductsFromDb = async () => {
+    setIsProductsLoading(true);
+    try {
+      const dbProds = await fetchProductsFromFirestore();
+      if (dbProds && dbProds.length > 0) {
+        setProducts(dbProds);
+        await persistProducts(dbProds);
+        setFirestoreError(null);
+      }
+    } catch (err: any) {
+      setFirestoreError(err?.message || 'Error loading from Firestore');
+    } finally {
+      setIsProductsLoading(false);
     }
   };
 
@@ -639,6 +846,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updatedOrders = orders.map((o) => (o.id === orderId ? updatedOrder : o));
     setOrders(updatedOrders);
     persistOrders(updatedOrders);
+
+    // Save permanently to Firestore
+    saveInvoiceToFirestore(invoice).catch((err) => {
+      console.warn('Firestore invoice save info:', err);
+    });
+    updateOrderInFirestore(targetOrder.id, {
+      status: 'Confirmed',
+      invoiceId: invoice.id,
+      invoiceSavedAt: nowIso,
+    }).catch(() => {});
 
     return { order: updatedOrder, invoice };
   };
@@ -872,6 +1089,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         currentView,
         filteredProducts,
         allTags,
+        isProductsLoading,
+        firestoreError,
+        isFirebaseActive,
+        firebaseUser,
+        isFirebaseAdmin,
+        adminEmail: ADMIN_EMAIL,
+        loginAdminWithGoogle,
+        migrateLocalDataToFirestore,
+        refreshProductsFromDb,
         setSelectedProduct,
         setIsCartOpen,
         addToCart,
