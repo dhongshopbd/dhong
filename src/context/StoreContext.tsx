@@ -191,23 +191,35 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // 2. Fetch products permanently from Cloud Firestore
     setIsProductsLoading(true);
     fetchProductsFromFirestore()
-      .then((firestoreProducts) => {
+      .then(async (firestoreProducts) => {
         if (!isMounted) return;
         if (firestoreProducts && firestoreProducts.length > 0) {
           setProducts(firestoreProducts);
           persistProducts(firestoreProducts);
           setFirestoreError(null);
         } else {
-          // Collection is kept empty unless the user adds a dress
-          setProducts([]);
-          persistProducts([]);
+          // If Firestore has no dresses yet, automatically seed INITIAL_PRODUCTS to Firebase
+          try {
+            await migrateLocalProductsToFirestore(INITIAL_PRODUCTS);
+            const fresh = await fetchProductsFromFirestore();
+            if (isMounted) {
+              const loaded = fresh && fresh.length > 0 ? fresh : INITIAL_PRODUCTS;
+              setProducts(loaded);
+              persistProducts(loaded);
+            }
+          } catch {
+            if (isMounted) {
+              setProducts(INITIAL_PRODUCTS);
+              persistProducts(INITIAL_PRODUCTS);
+            }
+          }
         }
       })
       .catch((err: any) => {
         if (!isMounted) return;
         console.warn('Could not read from Firestore:', err);
         setFirestoreError(err?.message || 'Firestore connection notice');
-        setProducts([]);
+        setProducts(INITIAL_PRODUCTS);
       })
       .finally(() => {
         if (isMounted) setIsProductsLoading(false);
@@ -220,11 +232,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setCategories(dbCats);
           persistCategories(dbCats);
         } else {
-          idbGet<string[]>('dhong_categories_v3').then((idbCats) => {
-            if (isMounted && Array.isArray(idbCats) && idbCats.length > 0) {
-              setCategories(idbCats);
-            }
+          INITIAL_CATEGORIES.forEach((cat) => {
+            saveCategoryToFirestore(cat).catch(() => {});
           });
+          setCategories(INITIAL_CATEGORIES);
+          persistCategories(INITIAL_CATEGORIES);
         }
       })
       .catch(() => {});
