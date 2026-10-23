@@ -30,7 +30,7 @@ export const AdminLoginModal: React.FC = () => {
     try {
       await loginAdminWithGoogle();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Firebase Authentication failed. Please ensure you are signing in with dhong.shop.bd@gmail.com.');
+      setErrorMsg(err.message || 'Firebase Authentication failed. Please ensure you are signing in with shong.shop.bd@gmail.com.');
     } finally {
       setIsGoogleLoading(false);
     }

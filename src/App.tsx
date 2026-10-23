@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
@@ -7,9 +7,11 @@ import { ProductCard } from './components/ProductCard';
 import { ProductModal } from './components/ProductModal';
 import { CartDrawer } from './components/CartDrawer';
 import { Footer } from './components/Footer';
+import { ContactModal } from './components/ContactModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPanel } from './components/AdminPanel';
-import { Sparkles, RotateCcw } from 'lucide-react';
+import { Sparkles, RotateCcw, MessageCircle, Phone, MapPin } from 'lucide-react';
+import { CONTACT_INFO } from './data/contactInfo';
 
 const MainContent: React.FC = () => {
   const {
@@ -24,6 +26,14 @@ const MainContent: React.FC = () => {
     firestoreError,
   } = useStore();
 
+  const [contactModalState, setContactModalState] = useState<{
+    isOpen: boolean;
+    tab: 'contact' | 'about';
+  }>({
+    isOpen: false,
+    tab: 'contact',
+  });
+
   // If on admin view
   if (currentView === 'admin') {
     if (!isAdminLoggedIn) {
@@ -35,7 +45,7 @@ const MainContent: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#fafafa] text-neutral-900 font-sans">
       {/* Dark Luxury Nav Bar */}
-      <Header />
+      <Header onOpenContact={() => setContactModalState({ isOpen: true, tab: 'contact' })} />
       
       {/* Clean, Simple Bangladesh Storefront Body */}
       <HeroBanner />
@@ -122,9 +132,48 @@ const MainContent: React.FC = () => {
         )}
       </main>
 
-      <Footer />
+      {/* Floating Instant WhatsApp, Call & Store Location Bar */}
+      <div className="fixed bottom-5 right-5 z-40 flex items-center gap-2 print:hidden">
+        <button
+          type="button"
+          onClick={() => setContactModalState({ isOpen: true, tab: 'contact' })}
+          className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-neutral-900/90 hover:bg-black text-white text-xs font-semibold shadow-xl border border-neutral-700/80 backdrop-blur-sm transition-all hover:scale-105 cursor-pointer"
+          title={`Store Location: ${CONTACT_INFO.address}`}
+        >
+          <MapPin className="w-3.5 h-3.5 text-red-500" />
+          <span>Store Map</span>
+        </button>
+
+        <a
+          href={CONTACT_INFO.phoneTelLink}
+          className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-neutral-900 hover:bg-black text-white text-xs font-semibold shadow-xl border border-neutral-700/80 backdrop-blur-sm transition-all hover:scale-105 font-mono"
+          title={`Direct Call: ${CONTACT_INFO.phoneFormatted}`}
+        >
+          <Phone className="w-3.5 h-3.5 text-red-500" />
+          <span>{CONTACT_INFO.phoneFormatted}</span>
+        </a>
+
+        <a
+          href={CONTACT_INFO.whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xl hover:shadow-emerald-600/30 transition-all hover:scale-105"
+          title={`Chat on WhatsApp (${CONTACT_INFO.whatsappInternational})`}
+          aria-label="Chat on WhatsApp"
+        >
+          <MessageCircle className="w-4 h-4 fill-current" />
+          <span>WhatsApp</span>
+        </a>
+      </div>
+
+      <Footer onOpenContact={(tab) => setContactModalState({ isOpen: true, tab })} />
       <ProductModal />
       <CartDrawer />
+      <ContactModal
+        isOpen={contactModalState.isOpen}
+        initialTab={contactModalState.tab}
+        onClose={() => setContactModalState((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

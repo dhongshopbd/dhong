@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
-import { Search, ShoppingBag, X, ChevronDown, ChevronRight, Layers, Sparkles, Check, Tag, ArrowRight } from 'lucide-react';
+import { Search, ShoppingBag, X, ChevronDown, ChevronRight, Layers, Sparkles, Check, Tag, ArrowRight, MapPin, Phone } from 'lucide-react';
 import { CATEGORY_HIERARCHY } from '../data/categoryHierarchy';
+import { CONTACT_INFO } from '../data/contactInfo';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onOpenContact?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
   const { 
     cart, 
     setIsCartOpen, 
@@ -183,7 +188,21 @@ export const Header: React.FC = () => {
       <div className="bg-neutral-900 border-b border-neutral-800/60 px-4 py-1.5 text-center text-xs tracking-wider text-neutral-400 font-light flex items-center justify-center gap-2 flex-wrap">
         <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
         <span className="text-red-400 font-semibold uppercase tracking-wider">BANGLADESH NATIONWIDE DELIVERY:</span>
-        <span className="text-neutral-300">Free delivery on orders over ৳5,000 | Cash on Delivery (COD) Available | bKash / Nagad</span>
+        <span className="text-neutral-300">
+          Free delivery on orders over ৳5,000 | Cash on Delivery (COD) | Hotline:{' '}
+          <a href={CONTACT_INFO.phoneTelLink} className="text-red-400 hover:text-red-300 font-semibold underline decoration-red-500/40 transition-colors font-mono">
+            {CONTACT_INFO.phoneFormatted}
+          </a>{' '}
+          | WhatsApp:{' '}
+          <a
+            href={CONTACT_INFO.whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors font-mono"
+          >
+            {CONTACT_INFO.whatsappNumber}
+          </a>
+        </span>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -249,8 +268,22 @@ export const Header: React.FC = () => {
             </form>
           </div>
 
-          {/* Action / Bag Button */}
+          {/* Action Buttons: Store Location & Bag */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {onOpenContact && (
+              <button
+                id="header-location-contact-btn"
+                type="button"
+                onClick={onOpenContact}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full bg-neutral-900 border border-neutral-800 hover:border-red-500/50 hover:bg-neutral-850 text-neutral-300 hover:text-white transition-all text-xs font-semibold tracking-wider uppercase cursor-pointer"
+                title={`Visit Store at ${CONTACT_INFO.address}`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-red-500" />
+                <span className="hidden md:inline">Location & Contact</span>
+                <span className="md:hidden">Contact</span>
+              </button>
+            )}
+
             <button
               id="shopping-bag-btn"
               onClick={() => setIsCartOpen(true)}

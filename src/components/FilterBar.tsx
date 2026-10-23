@@ -47,51 +47,59 @@ export const FilterBar: React.FC = () => {
         {/* Main Controls Row */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           
-          {/* Left: Category Tick Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <span className="text-neutral-400 text-xs font-semibold uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
-              Categories:
-            </span>
-
-            <button
-              id="filter-cat-all"
-              onClick={clearCategoriesFilter}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1.5 shrink-0 transition-all ${
-                filters.selectedCategories.length === 0
-                  ? 'bg-red-600 text-white font-bold shadow-sm'
-                  : 'bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-750 border border-neutral-700/60'
-              }`}
-            >
-              {filters.selectedCategories.length === 0 ? (
-                <CheckSquare className="w-3.5 h-3.5 text-white" />
-              ) : (
-                <Square className="w-3.5 h-3.5 text-neutral-400" />
-              )}
-              <span>All Collection</span>
-            </button>
-
-            {categories.map((cat) => {
-              const isChecked = filters.selectedCategories.includes(cat);
-              return (
-                <button
-                  key={cat}
-                  id={`tick-cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
-                  onClick={() => toggleCategoryFilter(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium tracking-wide flex items-center gap-1.5 shrink-0 transition-all ${
-                    isChecked
-                      ? 'bg-red-600 text-white font-bold shadow-sm'
-                      : 'bg-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-750 border border-neutral-700/60'
-                  }`}
-                >
-                  {isChecked ? (
-                    <CheckSquare className="w-3.5 h-3.5 text-white" />
-                  ) : (
-                    <Square className="w-3.5 h-3.5 text-neutral-400" />
-                  )}
-                  <span>{cat}</span>
-                </button>
-              );
-            })}
+          {/* Left: Active Filters Status / Store Tagline (Middle categories section removed) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none min-w-0">
+            {hasActiveFilters ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-neutral-400 text-xs font-semibold uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
+                  Active Filters:
+                </span>
+                {filters.selectedCategories.map((cat) => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-600/20 border border-red-500/40 text-red-300 text-xs font-medium"
+                  >
+                    <span>{cat}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleCategoryFilter(cat)}
+                      className="hover:text-white"
+                      title="Remove filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                {filters.selectedSizes.map((sz) => (
+                  <span
+                    key={sz}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-200 text-xs font-medium"
+                  >
+                    <span>Size: {sz}</span>
+                    <button
+                      type="button"
+                      onClick={() => toggleSizeFilter(sz)}
+                      className="hover:text-white"
+                      title="Remove size filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                {filters.searchQuery && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-neutral-800 border border-neutral-700 text-neutral-200 text-xs font-medium">
+                    <span>"{filters.searchQuery}"</span>
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs text-neutral-300">
+                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                <span className="font-semibold text-neutral-200 tracking-wide uppercase text-[11px]">
+                  Exclusive Bangladeshi Couture • Cash on Delivery (COD)
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Right: Quick Sort & Detailed Tick Mark Filter Drawer Toggle */}

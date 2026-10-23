@@ -145,12 +145,16 @@ export async function testFirestoreConnection(): Promise<boolean> {
 }
 
 // Authorized administrator verification
-export const ADMIN_EMAIL = 'dhong.shop.bd@gmail.com';
+export const ADMIN_EMAIL = 'shong.shop.bd@gmail.com';
+export const LEGACY_ADMIN_EMAIL = 'dhong.shop.bd@gmail.com';
 
 export function isUserAdmin(user: User | null): boolean {
   if (!user) return false;
-  if (user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-    return true;
+  if (user.email) {
+    const emailLower = user.email.toLowerCase();
+    if (emailLower === ADMIN_EMAIL.toLowerCase() || emailLower === LEGACY_ADMIN_EMAIL.toLowerCase()) {
+      return true;
+    }
   }
   return false;
 }
@@ -238,15 +242,40 @@ export async function createProductInFirestore(product: Product): Promise<Produc
   }
 }
 
-// 3. UPDATE Product in Firestore
-export async function updateProductInFirestore(productId: string, updates: Partial<Product>): Promise<void> {
+// 3. UPDATE Product in Firestore (always saved with upsert support)
+export async function updateProductInFirestore(
+  productId: string,
+  updates: Partial<Product>,
+  fullProduct?: Product
+): Promise<void> {
   if (!db) throw new Error('Firestore is not initialized');
   const path = `products/${productId}`;
   try {
     const docRef = doc(db, 'products', productId);
-    const cleanUpdates: any = { ...updates };
-    delete cleanUpdates.id; // Preserve document ID
-    await updateDoc(docRef, cleanUpdates);
+    if (fullProduct) {
+      const payload: any = {
+        id: productId,
+        name: fullProduct.name,
+        price: fullProduct.price,
+        category: fullProduct.category,
+        sizes: fullProduct.sizes || [],
+        tags: fullProduct.tags || [],
+        imageUrl: fullProduct.imageUrl,
+        description: fullProduct.description || '',
+        inStock: Boolean(fullProduct.inStock),
+        featured: Boolean(fullProduct.featured),
+        sku: fullProduct.sku,
+        createdAt: fullProduct.createdAt || new Date().toISOString(),
+      };
+      if (fullProduct.originalPrice !== undefined) {
+        payload.originalPrice = fullProduct.originalPrice;
+      }
+      await setDoc(docRef, payload, { merge: true });
+    } else {
+      const cleanUpdates: any = { ...updates };
+      delete cleanUpdates.id; // Preserve document ID
+      await setDoc(docRef, cleanUpdates, { merge: true });
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);
   }
@@ -443,3 +472,5 @@ export async function deleteInvoiceFromFirestore(invoiceId: string): Promise<voi
     handleFirestoreError(error, OperationType.DELETE, path);
   }
 }
+
+export const deleteInvoiceInFirestore = deleteInvoiceFromFirestore;

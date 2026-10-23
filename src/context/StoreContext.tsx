@@ -30,6 +30,8 @@ import {
   deleteOrderFromFirestore,
   saveInvoiceToFirestore,
   fetchInvoicesFromFirestore,
+  updateInvoiceInFirestore,
+  deleteInvoiceInFirestore,
   auth,
   isUserAdmin,
   signInAdminWithGoogle,
@@ -380,7 +382,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
 
-  // Category management & direct selection
+  // Category management & direct selection (always saved to Firestore)
   const addCategory = (categoryName: string): boolean => {
     const trimmed = categoryName.trim();
     if (!trimmed) return false;
@@ -388,6 +390,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const next = [...categories, trimmed];
       setCategories(next);
       persistCategories(next);
+      saveCategoryToFirestore(trimmed).catch((err) => {
+        console.warn('Failed to save category to Firestore:', err);
+      });
       return true;
     }
     return false;
@@ -400,9 +405,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCategories(nextCats);
     persistCategories(nextCats);
 
-    const nextProds = products.map((p) =>
-      p.category === oldName ? { ...p, category: trimmedNew } : p
-    );
+    // Sync Firestore categories
+    deleteCategoryFromFirestore(oldName).catch(() => {});
+    saveCategoryToFirestore(trimmedNew).catch(() => {});
+
+    const nextProds = products.map((p) => {
+      if (p.category === oldName) {
+        const updated = { ...p, category: trimmedNew };
+        updateProductInFirestore(p.id, { category: trimmedNew }, updated).catch(() => {});
+        return updated;
+      }
+      return p;
+    });
     setProducts(nextProds);
     persistProducts(nextProds);
 
@@ -417,12 +431,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nextCats = categories.filter((c) => c !== categoryName);
     setCategories(nextCats);
     persistCategories(nextCats);
+    deleteCategoryFromFirestore(categoryName).catch((err) => {
+      console.warn('Failed to delete category from Firestore:', err);
+    });
 
     // Reassign any products in the deleted category to the first remaining category
     const fallbackCategory = nextCats[0] || 'Dhong Haute Couture';
-    const nextProds = products.map((p) =>
-      p.category === categoryName ? { ...p, category: fallbackCategory } : p
-    );
+    const nextProds = products.map((p) => {
+      if (p.category === categoryName) {
+        const updated = { ...p, category: fallbackCategory };
+        updateProductInFirestore(p.id, { category: fallbackCategory }, updated).catch(() => {});
+        return updated;
+      }
+      return p;
+    });
     setProducts(nextProds);
     persistProducts(nextProds);
 
@@ -729,12 +751,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         saveCategoryToFirestore(cat).catch(() => {});
       }
     }
-    const nextProds = products.map((p) => (p.id === id ? { ...p, ...updates } : p));
+    const current = products.find((p) => p.id === id);
+    const updated: Product = current
+      ? { ...current, ...updates }
+      : ({
+          id,
+          name: updates.name || 'Dhong Exclusive Dress',
+          price: updates.price || 0,
+          category: updates.category || 'Party Gowns',
+          ...updates,
+        } as Product);
+
+    const nextProds = products.map((p) => (p.id === id ? updated : p));
     setProducts(nextProds);
     persistProducts(nextProds);
 
-    // Save permanently to Cloud Firestore
-    updateProductInFirestore(id, updates).catch((err) => {
+    // Save permanently to Cloud Firestore with full upsert payload
+    updateProductInFirestore(id, updates, updated).catch((err) => {
       console.error('Failed to update product in Firestore:', err);
     });
   };
@@ -864,6 +897,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nextInvs = invoices.map((inv) => (inv.id === invoiceId ? { ...inv, ...updates } : inv));
     setInvoices(nextInvs);
     persistInvoices(nextInvs);
+    updateInvoiceInFirestore(invoiceId, updates).catch((err) => {
+      console.warn('Failed to update invoice in Firestore:', err);
+    });
   };
 
   const deleteInvoice = (invoiceId: string) => {
@@ -871,12 +907,16 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const nextInvs = invoices.filter((inv) => inv.id !== invoiceId);
     setInvoices(nextInvs);
     persistInvoices(nextInvs);
+    deleteInvoiceInFirestore(invoiceId).catch((err) => {
+      console.warn('Failed to delete invoice from Firestore:', err);
+    });
 
     // If order was pointing to this invoice, clear invoiceId
     if (target?.orderId) {
       const nextOrders = orders.map((o) => (o.id === target.orderId ? { ...o, invoiceId: undefined } : o));
       setOrders(nextOrders);
       persistOrders(nextOrders);
+      updateOrderInFirestore(target.orderId, { invoiceId: undefined }).catch(() => {});
     }
   };
 
@@ -893,6 +933,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     setInvoices(nextInvs);
     persistInvoices(nextInvs);
+    updateInvoiceInFirestore(invoiceId, {
+      ...(channel === 'whatsapp' ? { whatsappSentAt: nowIso } : { emailSentAt: nowIso }),
+    }).catch(() => {});
   };
 
   const markOrderNumberSent = (orderId: string, channel: 'whatsapp' | 'email') => {
@@ -908,6 +951,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
     setOrders(nextOrders);
     persistOrders(nextOrders);
+    updateOrderInFirestore(orderId, {
+      ...(channel === 'whatsapp' ? { orderNumberSentAt: nowIso } : { orderNumberSentAt: nowIso }),
+    }).catch(() => {});
   };
 
   const getInvoiceByOrderId = (orderId: string): Invoice | undefined => {
@@ -927,6 +973,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const next = orders.map((o) => (o.id === orderId ? { ...o, status } : o));
     setOrders(next);
     persistOrders(next);
+    updateOrderInFirestore(orderId, { status }).catch((err) => {
+      console.warn('Failed to update order status in Firestore:', err);
+    });
 
     // Sync invoice status if one already exists
     const matchingInvoice = invoices.find((inv) => inv.orderId === orderId);
@@ -935,6 +984,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const nextInvs = invoices.map((inv) => (inv.orderId === orderId ? updatedInv : inv));
       setInvoices(nextInvs);
       persistInvoices(nextInvs);
+      updateInvoiceInFirestore(matchingInvoice.id, { status }).catch(() => {});
     }
   };
 
@@ -942,8 +992,15 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const next = orders.filter((o) => o.id !== orderId);
     setOrders(next);
     persistOrders(next);
+    deleteOrderFromFirestore(orderId).catch((err) => {
+      console.warn('Failed to delete order from Firestore:', err);
+    });
 
     // Also remove associated invoice
+    const matchingInvoice = invoices.find((inv) => inv.orderId === orderId);
+    if (matchingInvoice) {
+      deleteInvoiceInFirestore(matchingInvoice.id).catch(() => {});
+    }
     const nextInvs = invoices.filter((inv) => inv.orderId !== orderId);
     setInvoices(nextInvs);
     persistInvoices(nextInvs);
@@ -958,6 +1015,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const next = [newOrder, ...orders];
     setOrders(next);
     persistOrders(next);
+    saveOrderToFirestore(newOrder).catch((err) => {
+      console.warn('Failed to save manual order to Firestore:', err);
+    });
 
     // If manual order is created as Confirmed, generate invoice immediately
     if (newOrder.status === 'Confirmed') {

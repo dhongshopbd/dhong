@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { Sparkles, ArrowRight, ShieldCheck, Mail, MapPin, Phone } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Mail, MapPin, Phone, MessageCircle } from 'lucide-react';
+import { CONTACT_INFO } from '../data/contactInfo';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenContact?: (tab: 'contact' | 'about') => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenContact }) => {
   const { toggleCategoryFilter } = useStore();
   const [emailSub, setEmailSub] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -84,18 +89,49 @@ export const Footer: React.FC = () => {
             <p className="text-neutral-400 leading-relaxed font-light pr-6">
               <span className="text-red-400 font-medium">Come meet the new you.</span> Dhong is Bangladesh’s premier designer dress house, handcrafting evening gowns, festive anarkalis, fluid mulberry silks, and contemporary cocktail frocks for discerning women across Dhaka, Chittagong, Sylhet, and all 64 districts.
             </p>
-            <div className="space-y-1.5 text-[11px] text-neutral-400 pt-1">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                <span>Road 11, Banani & Dhanmondi 27, Dhaka, Bangladesh</span>
+            <div className="space-y-2 text-[11px] text-neutral-400 pt-1">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                <a
+                  href={CONTACT_INFO.googleMapsSearchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-red-400 hover:underline transition-colors leading-relaxed"
+                  title="Open Asiatic Shopping Complex, Demra on Google Maps"
+                >
+                  {CONTACT_INFO.address}
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                <span>Hotline: +880 1711-223344 (10 AM - 10 PM)</span>
+                <span>Hotline: </span>
+                <a
+                  href={CONTACT_INFO.phoneTelLink}
+                  className="text-neutral-200 hover:text-red-400 font-semibold transition-colors font-mono"
+                  title={`Call Dhong at ${CONTACT_INFO.phoneFormatted}`}
+                >
+                  {CONTACT_INFO.phoneFormatted}
+                </a>
+                <span className="text-neutral-500">(10 AM - 10 PM)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span>WhatsApp: </span>
+                <a
+                  href={CONTACT_INFO.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors inline-flex items-center gap-1 font-mono"
+                  title={`Chat with Dhong on WhatsApp (${CONTACT_INFO.whatsappInternational})`}
+                >
+                  {CONTACT_INFO.whatsappInternational}
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                <span>support@dhongfashion.com</span>
+                <a href={`mailto:${CONTACT_INFO.email}`} className="hover:text-red-400 transition-colors">
+                  {CONTACT_INFO.email}
+                </a>
               </div>
             </div>
           </div>
@@ -152,14 +188,48 @@ export const Footer: React.FC = () => {
           {/* Customer Concierge */}
           <div className="space-y-3">
             <h4 className="text-neutral-200 font-bold uppercase tracking-wider text-xs">
-              Customer Support
+              Customer Support & Contact
             </h4>
             <ul className="space-y-2">
-              <li className="hover:text-neutral-200 cursor-pointer">Cash on Delivery Policy</li>
-              <li className="hover:text-neutral-200 cursor-pointer">Nationwide Courier (Pathao / Steadfast)</li>
-              <li className="hover:text-neutral-200 cursor-pointer">7-Day Size Exchange Guarantee</li>
-              <li className="hover:text-neutral-200 cursor-pointer">Silk & Velvet Dry Clean Tips</li>
-              <li className="hover:text-neutral-200 cursor-pointer">Track Your Order Status</li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenContact?.('contact')}
+                  className="text-red-400 hover:text-red-300 font-medium transition-colors cursor-pointer text-left"
+                >
+                  📍 Store Location & Contact Us
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenContact?.('about')}
+                  className="hover:text-neutral-200 transition-colors cursor-pointer text-left"
+                >
+                  About Dhong Atelier
+                </button>
+              </li>
+              <li>
+                <a
+                  href={CONTACT_INFO.phoneTelLink}
+                  className="hover:text-red-400 transition-colors inline-block font-mono"
+                >
+                  Helpline: {CONTACT_INFO.phoneFormatted}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={CONTACT_INFO.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors inline-block"
+                >
+                  WhatsApp: {CONTACT_INFO.whatsappNumber}
+                </a>
+              </li>
+              <li className="hover:text-neutral-200">Cash on Delivery (COD) Policy</li>
+              <li className="hover:text-neutral-200">Nationwide Courier (Pathao / Steadfast)</li>
+              <li className="hover:text-neutral-200">7-Day Size Exchange Guarantee</li>
             </ul>
           </div>
 

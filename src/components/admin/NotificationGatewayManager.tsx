@@ -21,14 +21,14 @@ export const NotificationGatewayManager: React.FC = () => {
   const [gatewayData, setGatewayData] = useState<any>(null);
 
   // Form State
-  const [smtpUser, setSmtpUser] = useState('dhong.shop.bd@gmail.com');
+  const [smtpUser, setSmtpUser] = useState('shong.shop.bd@gmail.com');
   const [smtpPass, setSmtpPass] = useState('');
   const [fromName, setFromName] = useState('Dhong Bangladesh (ঢং)');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   // Test Email State
-  const [testEmailTarget, setTestEmailTarget] = useState('dhong.shop.bd@gmail.com');
+  const [testEmailTarget, setTestEmailTarget] = useState('shong.shop.bd@gmail.com');
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
 
@@ -126,7 +126,7 @@ export const NotificationGatewayManager: React.FC = () => {
             Sends rich HTML Order Numbers and Tax Invoices automatically to customers upon checkout and order confirmation.
           </p>
           <div className="text-[11px] font-mono text-neutral-300 pt-1 border-t border-neutral-800">
-            From: {gatewayData?.fromEmail || 'dhong.shop.bd@gmail.com'}
+            From: {gatewayData?.fromEmail || 'shong.shop.bd@gmail.com'}
           </div>
         </div>
 
@@ -184,7 +184,7 @@ export const NotificationGatewayManager: React.FC = () => {
           </div>
 
           <p className="text-xs text-neutral-400 leading-relaxed">
-            To send actual emails from <strong>dhong.shop.bd@gmail.com</strong> directly to real customer inboxes, generate a Google <strong>App Password</strong> (Google Account &rarr; Security &rarr; 2-Step Verification &rarr; App Passwords) and paste it below.
+            To send actual emails from <strong>shong.shop.bd@gmail.com</strong> directly to real customer inboxes, generate a Google <strong>App Password</strong> (Google Account &rarr; Security &rarr; 2-Step Verification &rarr; App Passwords) and paste it below.
           </p>
 
           <form onSubmit={handleSaveConfig} className="space-y-3">
@@ -196,7 +196,7 @@ export const NotificationGatewayManager: React.FC = () => {
                 type="email"
                 value={smtpUser}
                 onChange={(e) => setSmtpUser(e.target.value)}
-                placeholder="dhong.shop.bd@gmail.com"
+                placeholder="shong.shop.bd@gmail.com"
                 className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none focus:border-red-500"
               />
             </div>
@@ -280,7 +280,7 @@ export const NotificationGatewayManager: React.FC = () => {
                 type="email"
                 value={testEmailTarget}
                 onChange={(e) => setTestEmailTarget(e.target.value)}
-                placeholder="dhong.shop.bd@gmail.com"
+                placeholder="shong.shop.bd@gmail.com"
                 className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-3 py-2 text-xs text-neutral-200 focus:outline-none focus:border-red-500"
               />
             </div>

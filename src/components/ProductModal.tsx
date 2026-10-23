@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
 import { DressSize } from '../types';
-import { X, ShoppingBag, Check, Shield, Sparkles, Tag, Truck } from 'lucide-react';
+import { X, ShoppingBag, Check, Shield, Sparkles, Tag, Truck, Phone, MessageCircle } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
+import { CONTACT_INFO } from '../data/contactInfo';
 
 export const ProductModal: React.FC = () => {
   const { selectedProduct, setSelectedProduct, addToCart, setIsCartOpen } = useStore();
@@ -226,6 +227,30 @@ export const ProductModal: React.FC = () => {
               <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-500 pt-1">
                 <Shield className="w-3.5 h-3.5 text-red-600" />
                 <span>100% Genuine fabric guarantee & easy 7-day size exchange across Bangladesh</span>
+              </div>
+
+              {/* Instant Assistance Row */}
+              <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-600 pt-2 border-t border-neutral-100 flex-wrap">
+                <span>Questions on dress or size?</span>
+                <a
+                  href={CONTACT_INFO.phoneTelLink}
+                  className="text-red-600 hover:text-red-700 font-semibold inline-flex items-center gap-1 font-mono"
+                  title={`Call ${CONTACT_INFO.phoneFormatted}`}
+                >
+                  <Phone className="w-3 h-3" />
+                  <span>{CONTACT_INFO.phoneFormatted}</span>
+                </a>
+                <span>•</span>
+                <a
+                  href={CONTACT_INFO.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-600 hover:text-emerald-700 font-semibold inline-flex items-center gap-1"
+                  title="Ask on WhatsApp"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  <span>WhatsApp</span>
+                </a>
               </div>
             </div>
 

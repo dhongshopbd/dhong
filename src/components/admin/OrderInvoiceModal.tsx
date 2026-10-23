@@ -189,7 +189,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
                 High Fashion & Designer Dresses • Bangladesh
               </p>
               <p className="text-[11px] text-neutral-400 mt-0.5">
-                Dhaka, Bangladesh • Helpline: +880 1711-223344 • support@dhongfashion.com
+                Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Helpline: <a href="tel:01790141399" className="hover:underline text-neutral-600 font-medium">01790141399</a> • <a href="mailto:shong.shop.bd@gmail.com" className="hover:underline text-neutral-600 font-medium">shong.shop.bd@gmail.com</a>
               </p>
             </div>
 
@@ -336,7 +336,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
           <div className="border-t border-neutral-200 pt-4 text-center text-[10px] text-neutral-400 space-y-1">
             <p className="font-medium text-neutral-600">Dhong Bangladesh (ঢং) — "Come meet the new you"</p>
             <p>Thank you for choosing Dhong for exclusive couture & designer wear.</p>
-            <p>For inquiries within Bangladesh, call 01711-223344 or WhatsApp with Invoice #{invoiceNumber}.</p>
+            <p>For inquiries within Bangladesh, call <a href="tel:01790141399" className="font-semibold text-neutral-700 hover:underline">01790141399</a> or WhatsApp <a href="https://wa.me/8801790141399" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-700 hover:underline">+8801790141399</a> with Invoice #{invoiceNumber}.</p>
           </div>
 
         </div>

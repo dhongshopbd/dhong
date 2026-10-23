@@ -3,6 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { X, Trash2, ArrowRight, ShoppingBag, Truck } from 'lucide-react';
 import { CheckoutModal } from './CheckoutModal';
 import { formatBDT } from '../utils/currency';
+import { CONTACT_INFO } from '../data/contactInfo';
 
 export const CartDrawer: React.FC = () => {
   const { isCartOpen, setIsCartOpen, cart, updateCartQuantity, removeFromCart } = useStore();
@@ -184,11 +185,22 @@ export const CartDrawer: React.FC = () => {
                 <button
                   id="cart-checkout-btn"
                   onClick={() => setIsCheckoutOpen(true)}
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md shadow-red-600/20"
+                  className="w-full py-3.5 px-4 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-md shadow-red-600/20 cursor-pointer"
                 >
                   <span>Checkout with Cash on Delivery / bKash</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
+
+                <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-500 pt-1">
+                  <span>Helpline:</span>
+                  <a href={CONTACT_INFO.phoneTelLink} className="text-neutral-900 font-semibold hover:text-red-600 font-mono">
+                    {CONTACT_INFO.phoneFormatted}
+                  </a>
+                  <span>•</span>
+                  <a href={CONTACT_INFO.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-semibold hover:underline">
+                    WhatsApp Chat
+                  </a>
+                </div>
               </div>
             )}
 

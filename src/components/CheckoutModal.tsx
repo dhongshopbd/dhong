@@ -4,6 +4,7 @@ import { CustomerOrder } from '../types';
 import { X, CheckCircle, ShieldCheck, CreditCard, Banknote, ShoppingBag, Truck, MessageCircle, Mail, Send, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import { formatBDT } from '../utils/currency';
 import { triggerOrderNumberNotification, formatBDPhoneForWhatsApp, sendOrderEmailToServer } from '../utils/notifications';
+import { CONTACT_INFO } from '../data/contactInfo';
 
 interface CheckoutModalProps {
   onClose: () => void;
@@ -136,7 +137,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               <div className="text-[11px] text-emerald-800 pt-1.5 border-t border-emerald-200/70 flex items-start gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  Our team in Dhaka is preparing your dresses. When your order is confirmed, your official Tax Invoice will also be automatically sent to your WhatsApp and Gmail.
+                  Our atelier team at Asiatic Shopping Complex, Konapara, Demra is preparing your dresses. When your order is confirmed, your official Tax Invoice will also be automatically sent to your WhatsApp and Gmail.
                 </span>
               </div>
             </div>
@@ -249,7 +250,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
               })()}
             </div>
 
-            <div className="pt-2 text-center">
+            <div className="pt-2 text-center space-y-3">
+              <div className="text-[11px] text-neutral-500 pt-1 border-t border-neutral-200">
+                <span>Need urgent order assistance or delivery changes?</span>
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  <a href={CONTACT_INFO.phoneTelLink} className="font-semibold text-red-600 hover:underline font-mono">
+                    Hotline: {CONTACT_INFO.phoneFormatted}
+                  </a>
+                  <span>•</span>
+                  <a href={CONTACT_INFO.whatsappUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 hover:underline">
+                    WhatsApp: {CONTACT_INFO.whatsappNumber}
+                  </a>
+                </div>
+              </div>
+
               <button
                 onClick={() => {
                   setIsCartOpen(false);
@@ -330,7 +344,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onClose }) => {
                     required
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="e.g. House 42, Road 11, Banani"
+                    placeholder="e.g. House 12, Al-Amin Road, Konapara, Demra"
                     className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-red-500"
                   />
                 </div>

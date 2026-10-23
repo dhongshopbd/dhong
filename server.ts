@@ -40,9 +40,9 @@ const config: NotificationConfig = {
   smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
   smtpPort: Number(process.env.SMTP_PORT) || 465,
   smtpSecure: process.env.SMTP_SECURE !== 'false',
-  smtpUser: process.env.SMTP_USER || 'dhong.shop.bd@gmail.com',
+  smtpUser: process.env.SMTP_USER || 'shong.shop.bd@gmail.com',
   smtpPass: process.env.SMTP_PASS || '',
-  fromEmail: process.env.FROM_EMAIL || 'dhong.shop.bd@gmail.com',
+  fromEmail: process.env.FROM_EMAIL || 'shong.shop.bd@gmail.com',
   fromName: process.env.FROM_NAME || 'Dhong Bangladesh (ঢং)',
   webhookUrl: process.env.WEBHOOK_URL || '',
 };
@@ -192,7 +192,7 @@ app.post('/api/notifications/send-order-email', async (req: Request, res: Respon
           </div>
         </div>
         <div style="background: #f9fafb; padding: 16px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb;">
-          Dhaka, Bangladesh • Helpline: +880 1711-223344<br/>
+          Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Helpline: 01790141399<br/>
           Dhong Bangladesh — Come meet the new you.
         </div>
       </div>
@@ -326,7 +326,7 @@ app.post('/api/notifications/send-invoice-email', async (req: Request, res: Resp
           </table>
         </div>
         <div style="background: #f9fafb; padding: 16px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb;">
-          Dhaka, Bangladesh • Hotline: +880 1711-223344<br/>
+          Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Hotline: 01790141399<br/>
           Dhong Bangladesh — Come meet the new you.
         </div>
       </div>

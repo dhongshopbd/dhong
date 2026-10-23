@@ -7,9 +7,9 @@ import { formatBDT } from './currency';
 /**
  * Normalizes a Bangladeshi phone number for international WhatsApp format.
  * Examples:
- *   "01711223344" -> "8801711223344"
- *   "+880 1711-223344" -> "8801711223344"
- *   "8801711223344" -> "8801711223344"
+ *   "01790141399" -> "8801790141399"
+ *   "+880 1790-141399" -> "8801790141399"
+ *   "8801790141399" -> "8801790141399"
  */
 export function formatBDPhoneForWhatsApp(phone: string): string {
   const digitsOnly = phone.replace(/\D/g, '');
@@ -46,7 +46,7 @@ Salam ${order.customerName}! Thank you for shopping with Dhong Bangladesh.
 ⏳ *Status:* Received (Pending Admin Confirmation)
 ℹ️ *Note:* Our Dhaka dispatch team will verify your dress measurements and confirm your order shortly. Once confirmed, you will automatically receive your *Official Invoice Number*!
 
-Helpline: +880 1711-223344
+Helpline: 01790141399 (WhatsApp: 8801790141399)
 Website: https://dhong.vercel.app/`
   );
 }
@@ -81,7 +81,7 @@ ${invoice.courier ? `Courier: ${invoice.courier}${invoice.trackingCode ? ` (Trac
 
 Your designer wear is now being packed with utmost care for swift dispatch. Keep this Invoice Number for order tracking.
 
-Dhaka, Bangladesh • Hotline: +880 1711-223344
+Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Hotline: 01790141399
 Website: https://dhong.vercel.app/`
   );
 }

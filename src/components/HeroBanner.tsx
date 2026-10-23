@@ -27,39 +27,26 @@ export const HeroBanner: React.FC = () => {
               Come meet the new you with Dhong’s signature party gowns, pure georgette silks, festive anarkalis, and ready-to-wear luxury dresses. Fast Cash on Delivery (COD) across all 64 districts in Bangladesh with easy size exchange.
             </p>
 
-            {/* Quick Filter Buttons */}
-            <div className="flex flex-wrap gap-2.5 items-center">
+            {/* Storefront Action Buttons */}
+            <div className="flex flex-wrap gap-3 items-center">
               <button
-                id="hero-party-gowns-btn"
-                onClick={() => toggleCategoryFilter('Party Gowns')}
-                className="px-5 py-2.5 rounded-full bg-[#e32117] hover:bg-red-700 text-white font-semibold text-xs tracking-wider uppercase transition-all shadow-md shadow-red-600/20 flex items-center gap-2"
+                id="hero-explore-collection-btn"
+                onClick={() => {
+                  document.querySelector('main')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="px-6 py-3 rounded-full bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-md shadow-red-600/25 flex items-center gap-2 cursor-pointer"
               >
-                <span>Party Gowns</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Explore Exclusive Collection</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
               
               <button
-                id="hero-silk-btn"
-                onClick={() => toggleCategoryFilter('Silk & Georgette')}
-                className="px-5 py-2.5 rounded-full bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-300 font-medium text-xs tracking-wider uppercase transition-all shadow-xs"
-              >
-                Silk & Georgette
-              </button>
-
-              <button
-                id="hero-anarkali-btn"
-                onClick={() => toggleCategoryFilter('Festive Anarkalis')}
-                className="px-5 py-2.5 rounded-full bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-300 font-medium text-xs tracking-wider uppercase transition-all shadow-xs"
-              >
-                Festive Anarkalis
-              </button>
-
-              <button
                 id="hero-deals-btn"
                 onClick={() => setSortBy('price-asc')}
-                className="px-4 py-2.5 rounded-full text-red-700 hover:text-red-900 text-xs font-bold tracking-wider transition-colors"
+                className="px-5 py-3 rounded-full bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-300 font-semibold text-xs tracking-wider uppercase transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
               >
-                Price: Low to High (৳) →
+                <span>Price: Low to High (৳)</span>
+                <ArrowRight className="w-3.5 h-3.5 text-red-600" />
               </button>
             </div>
           </div>
