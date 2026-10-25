@@ -384,7 +384,7 @@ export const InvoicesManager: React.FC = () => {
                       title="View & Print Official Invoice"
                     >
                       <Printer className="w-3.5 h-3.5 text-red-400" />
-                      <span>Invoice</span>
+                      <span>Print / View</span>
                     </button>
 
                     {/* Delete Invoice */}

@@ -46,8 +46,7 @@ Salam ${order.customerName}! Thank you for shopping with Dhong Bangladesh.
 ⏳ *Status:* Received (Pending Admin Confirmation)
 ℹ️ *Note:* Our Dhaka dispatch team will verify your dress measurements and confirm your order shortly. Once confirmed, you will automatically receive your *Official Invoice Number*!
 
-Helpline: 01790141399 (WhatsApp: 8801790141399)
-Website: https://dhong.vercel.app/`
+Helpline: 01790141399 (WhatsApp: 8801790141399)`
   );
 }
 
@@ -81,8 +80,7 @@ ${invoice.courier ? `Courier: ${invoice.courier}${invoice.trackingCode ? ` (Trac
 
 Your designer wear is now being packed with utmost care for swift dispatch. Keep this Invoice Number for order tracking.
 
-Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Hotline: 01790141399
-Website: https://dhong.vercel.app/`
+Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Hotline: 01790141399`
   );
 }
 

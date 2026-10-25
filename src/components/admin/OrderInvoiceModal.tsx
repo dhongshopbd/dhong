@@ -134,11 +134,13 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
 
             {/* Print Action */}
             <button
+              id="top-print-invoice-btn"
               onClick={handlePrint}
-              className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Print official invoice or save as PDF"
             >
-              <Printer className="w-3.5 h-3.5 text-neutral-300" />
-              <span>Print</span>
+              <Printer className="w-3.5 h-3.5 text-red-600" />
+              <span>Print Invoice</span>
             </button>
 
             <button
@@ -162,7 +164,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
         )}
 
         {/* Printable Invoice Body */}
-        <div className="p-6 sm:p-8 space-y-6 print:p-8">
+        <div id="printable-invoice" className="p-6 sm:p-8 space-y-6 print:p-8 bg-white">
           
           {/* Header */}
           <div className="flex justify-between items-start border-b border-neutral-200 pb-5">
@@ -339,6 +341,40 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
             <p>For inquiries within Bangladesh, call <a href="tel:01790141399" className="font-semibold text-neutral-700 hover:underline">01790141399</a> or WhatsApp <a href="https://wa.me/8801790141399" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-700 hover:underline">+8801790141399</a> with Invoice #{invoiceNumber}.</p>
           </div>
 
+        </div>
+
+        {/* Modal Bottom Actions Bar (Hidden when printing) */}
+        <div className="p-4 bg-neutral-50 border-t border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+          <div className="text-xs text-neutral-500 font-medium">
+            Official Invoice: <strong className="text-neutral-900 font-mono">{invoiceNumber}</strong>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              id="bottom-print-invoice-btn"
+              onClick={handlePrint}
+              className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-black text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              title="Print official invoice or save as PDF"
+            >
+              <Printer className="w-4 h-4 text-red-400" />
+              <span>Print Invoice</span>
+            </button>
+
+            <button
+              onClick={handleWhatsAppSend}
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Send WhatsApp</span>
+            </button>
+
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-100 text-neutral-700 text-xs font-semibold border border-neutral-300 transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </div>
