@@ -23,10 +23,11 @@ import {
   MapPin,
   ExternalLink,
   ShoppingBag,
+  RotateCcw,
 } from 'lucide-react';
 
 export const InvoicesManager: React.FC = () => {
-  const { invoices, deleteInvoice, markInvoiceSent, orders } = useStore();
+  const { invoices, deleteInvoice, markInvoiceSent, orders, refreshOrdersFromDatabase, isOrdersSyncing } = useStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | Invoice['status']>('ALL');
@@ -139,6 +140,27 @@ export const InvoicesManager: React.FC = () => {
           <p className="text-xs text-neutral-400 mt-1">
             Official tax invoices are saved here immediately after you confirm an order. Search any previous invoice by Invoice #, Order #, Phone, or Customer Name.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] text-neutral-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Cloud Firestore: <strong className="text-emerald-400">Live Sync Active</strong></span>
+          </div>
+
+          <button
+            type="button"
+            disabled={isOrdersSyncing}
+            onClick={async () => {
+              await refreshOrdersFromDatabase();
+              showNotice('Invoices refreshed live from Cloud Firestore database!');
+            }}
+            className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 text-xs border border-neutral-800 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            title="Refresh invoices directly from Cloud Firestore database"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 text-red-500 ${isOrdersSyncing ? 'animate-spin' : ''}`} />
+            <span>{isOrdersSyncing ? 'Syncing...' : 'Sync Database'}</span>
+          </button>
         </div>
       </div>
 

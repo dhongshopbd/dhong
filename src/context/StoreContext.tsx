@@ -26,10 +26,12 @@ import {
   deleteCategoryFromFirestore,
   saveOrderToFirestore,
   fetchOrdersFromFirestore,
+  subscribeToOrdersInFirestore,
   updateOrderInFirestore,
   deleteOrderFromFirestore,
   saveInvoiceToFirestore,
   fetchInvoicesFromFirestore,
+  subscribeToInvoicesInFirestore,
   updateInvoiceInFirestore,
   deleteInvoiceInFirestore,
   auth,
@@ -67,6 +69,8 @@ interface StoreContextType {
   loginAdminWithGoogle: () => Promise<boolean>;
   migrateLocalDataToFirestore: () => Promise<{ migratedCount: number; skippedCount: number; totalInFirestore: number }>;
   refreshProductsFromDb: () => Promise<void>;
+  refreshOrdersFromDatabase: () => Promise<void>;
+  isOrdersSyncing: boolean;
   
   // Actions
   setSelectedProduct: (product: Product | null) => void;
@@ -178,6 +182,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isFirebaseActive, setIsFirebaseActive] = useState<boolean>(isFirebaseConfigured);
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [isFirebaseAdmin, setIsFirebaseAdmin] = useState<boolean>(false);
+  const [isOrdersSyncing, setIsOrdersSyncing] = useState<boolean>(false);
 
   // Deep hydration from Firestore and IndexedDB on startup
   useEffect(() => {
@@ -241,58 +246,59 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
       .catch(() => {});
 
-    // 4. Hydrate orders and invoices directly from Cloud Firestore (with local offline fallback)
-    fetchOrdersFromFirestore()
-      .then((dbOrders) => {
-        if (isMounted && dbOrders !== null) {
-          const realOrders = dbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
-          setOrders(realOrders);
-          persistOrders(realOrders);
-        } else {
-          idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
-            if (isMounted && Array.isArray(idbOrders)) {
-              const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
-              setOrders(realOrders);
-            }
-          });
-        }
-      })
-      .catch(() => {
-        idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
-          if (isMounted && Array.isArray(idbOrders)) {
-            const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
-            setOrders(realOrders);
-          }
-        });
-      });
+    // 4. Attach Real-time Firestore Listeners for Orders and Invoices (Instant Multi-Device Sync)
+    const unsubOrders = subscribeToOrdersInFirestore((dbOrders) => {
+      if (!isMounted) return;
+      setOrders(dbOrders);
+      persistOrders(dbOrders);
+    });
 
-    fetchInvoicesFromFirestore()
-      .then((dbInvoices) => {
-        if (isMounted && dbInvoices !== null) {
-          const realInvoices = dbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
-          setInvoices(realInvoices);
-          persistInvoices(realInvoices);
-        } else {
-          idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
-            if (isMounted && Array.isArray(idbInvoices)) {
-              const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
-              setInvoices(realInvoices);
-            }
-          });
-        }
-      })
-      .catch(() => {
-        idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
-          if (isMounted && Array.isArray(idbInvoices)) {
-            const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
-            setInvoices(realInvoices);
+    const unsubInvoices = subscribeToInvoicesInFirestore((dbInvoices) => {
+      if (!isMounted) return;
+      setInvoices(dbInvoices);
+      persistInvoices(dbInvoices);
+    });
+
+    // Initial fetch fallback and sync any previously offline local orders to Firestore
+    fetchOrdersFromFirestore().then((dbOrders) => {
+      if (isMounted && dbOrders !== null) {
+        setOrders(dbOrders);
+        persistOrders(dbOrders);
+      }
+    }).catch(() => {});
+
+    fetchInvoicesFromFirestore().then((dbInvs) => {
+      if (isMounted && dbInvs !== null) {
+        setInvoices(dbInvs);
+        persistInvoices(dbInvs);
+      }
+    }).catch(() => {});
+
+    // Sync any existing local orders to Firestore so they are never lost across devices
+    idbGet<CustomerOrder[]>('dhong_orders_v3').then(async (idbOrders) => {
+      if (isMounted && Array.isArray(idbOrders) && idbOrders.length > 0) {
+        for (const lo of idbOrders) {
+          if (!LEGACY_DUMMY_ORDER_IDS.has(lo.id)) {
+            await saveOrderToFirestore(lo).catch(() => {});
           }
-        });
-      });
+        }
+      }
+    });
+
+    idbGet<Invoice[]>('dhong_invoices_v3').then(async (idbInvoices) => {
+      if (isMounted && Array.isArray(idbInvoices) && idbInvoices.length > 0) {
+        for (const li of idbInvoices) {
+          if (!LEGACY_DUMMY_INVOICE_IDS.has(li.id)) {
+            await saveInvoiceToFirestore(li).catch(() => {});
+          }
+        }
+      }
+    });
 
     // 5. Listen for Firebase Auth state changes
+    let unsubscribeAuth: (() => void) | null = null;
     if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribeAuth = onAuthStateChanged(auth, (user) => {
         if (!isMounted) return;
         setFirebaseUser(user);
         if (user) {
@@ -303,35 +309,18 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             try {
               localStorage.setItem(ADMIN_AUTH_KEY, 'true');
             } catch {}
-            // Admin fetches latest orders and invoices from Firestore
-            fetchOrdersFromFirestore().then((dbOrders) => {
-              if (isMounted && dbOrders !== null) {
-                const realOrders = dbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
-                setOrders(realOrders);
-                persistOrders(realOrders);
-              }
-            }).catch(() => {});
-            fetchInvoicesFromFirestore().then((dbInvs) => {
-              if (isMounted && dbInvs !== null) {
-                const realInvoices = dbInvs.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
-                setInvoices(realInvoices);
-                persistInvoices(realInvoices);
-              }
-            }).catch(() => {});
           }
         } else {
           setIsFirebaseAdmin(false);
         }
       });
-
-      return () => {
-        isMounted = false;
-        unsubscribe();
-      };
     }
 
     return () => {
       isMounted = false;
+      if (unsubOrders) unsubOrders();
+      if (unsubInvoices) unsubInvoices();
+      if (unsubscribeAuth) unsubscribeAuth();
     };
   }, []);
 
@@ -874,6 +863,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const refreshOrdersFromDatabase = async () => {
+    setIsOrdersSyncing(true);
+    try {
+      const [freshOrders, freshInvoices] = await Promise.all([
+        fetchOrdersFromFirestore(),
+        fetchInvoicesFromFirestore(),
+      ]);
+      if (freshOrders !== null) {
+        setOrders(freshOrders);
+        await persistOrders(freshOrders);
+      }
+      if (freshInvoices !== null) {
+        setInvoices(freshInvoices);
+        await persistInvoices(freshInvoices);
+      }
+    } catch (err: any) {
+      console.warn('Error refreshing orders from Firestore:', err);
+    } finally {
+      setIsOrdersSyncing(false);
+    }
+  };
+
   // --- INVOICE MANAGEMENT (Only created and saved upon order confirmation!) ---
   const confirmOrderAndCreateInvoice = (orderId: string): { order: CustomerOrder; invoice: Invoice } | null => {
     const targetOrder = orders.find((o) => o.id === orderId);
@@ -1209,6 +1220,8 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         loginAdminWithGoogle,
         migrateLocalDataToFirestore,
         refreshProductsFromDb,
+        refreshOrdersFromDatabase,
+        isOrdersSyncing,
         setSelectedProduct,
         setIsCartOpen,
         addToCart,

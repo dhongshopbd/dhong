@@ -59,14 +59,14 @@ service cloud.firestore {
       allow read, write: if isValidId(categoryId);
     }
 
-    // Customer Orders
+    // Customer Orders: read, write, update, delete for live storefront & admin panel
     match /orders/{orderId} {
-      allow read, write, delete: if isValidId(orderId);
+      allow read, write: if true;
     }
 
-    // Invoices
+    // Invoices: read, write, update, delete
     match /invoices/{invoiceId} {
-      allow read, write, delete: if isValidId(invoiceId);
+      allow read, write: if true;
     }
 
     // Admins

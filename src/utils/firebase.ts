@@ -19,6 +19,7 @@ import {
   updateDoc,
   deleteDoc,
   getDocFromServer,
+  onSnapshot,
   Firestore,
 } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, FirebaseStorage } from 'firebase/storage';
@@ -404,7 +405,35 @@ export async function fetchOrdersFromFirestore(): Promise<CustomerOrder[] | null
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return list;
   } catch (error) {
+    console.warn('fetchOrdersFromFirestore error:', error);
     return null;
+  }
+}
+
+// Real-time synchronization listener for Customer Orders
+export function subscribeToOrdersInFirestore(
+  onUpdate: (orders: CustomerOrder[]) => void,
+  onError?: (error: any) => void
+): () => void {
+  if (!db) return () => {};
+  const path = 'orders';
+  try {
+    return onSnapshot(
+      collection(db, path),
+      (snapshot) => {
+        const list: CustomerOrder[] = [];
+        snapshot.forEach((d) => list.push(d.data() as CustomerOrder));
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        onUpdate(list);
+      },
+      (error) => {
+        console.warn('subscribeToOrdersInFirestore error:', error);
+        if (onError) onError(error);
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to attach orders real-time listener:', err);
+    return () => {};
   }
 }
 
@@ -451,7 +480,35 @@ export async function fetchInvoicesFromFirestore(): Promise<Invoice[] | null> {
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return list;
   } catch (error) {
+    console.warn('fetchInvoicesFromFirestore error:', error);
     return null;
+  }
+}
+
+// Real-time synchronization listener for Invoices
+export function subscribeToInvoicesInFirestore(
+  onUpdate: (invoices: Invoice[]) => void,
+  onError?: (error: any) => void
+): () => void {
+  if (!db) return () => {};
+  const path = 'invoices';
+  try {
+    return onSnapshot(
+      collection(db, path),
+      (snapshot) => {
+        const list: Invoice[] = [];
+        snapshot.forEach((d) => list.push(d.data() as Invoice));
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        onUpdate(list);
+      },
+      (error) => {
+        console.warn('subscribeToInvoicesInFirestore error:', error);
+        if (onError) onError(error);
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to attach invoices real-time listener:', err);
+    return () => {};
   }
 }
 

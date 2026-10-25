@@ -45,11 +45,12 @@ export const OrdersManager: React.FC = () => {
     confirmOrderAndCreateInvoice,
     deleteOrder,
     addManualOrder,
-    resetOrdersToSample,
     products,
     getInvoiceByOrderId,
     markInvoiceSent,
     markOrderNumberSent,
+    refreshOrdersFromDatabase,
+    isOrdersSyncing,
   } = useStore();
 
   const [statusFilter, setStatusFilter] = useState<'ALL' | CustomerOrder['status']>('ALL');
@@ -232,28 +233,34 @@ export const OrdersManager: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Cloud Sync Status Indicator */}
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] text-neutral-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Cloud Firestore: <strong className="text-emerald-400">Live Sync Active</strong></span>
+          </div>
+
           <button
             type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/20 flex items-center gap-1.5"
+            disabled={isOrdersSyncing}
+            onClick={async () => {
+              await refreshOrdersFromDatabase();
+              showToast('Orders & Invoices synced live with Cloud Firestore database!');
+            }}
+            className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 text-xs border border-neutral-800 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            title="Refresh orders directly from Cloud Firestore database"
           >
-            <Plus className="w-4 h-4" />
-            <span>Record Order</span>
+            <RotateCcw className={`w-3.5 h-3.5 text-red-500 ${isOrdersSyncing ? 'animate-spin' : ''}`} />
+            <span>{isOrdersSyncing ? 'Syncing...' : 'Sync Database'}</span>
           </button>
 
           <button
             type="button"
-            onClick={() => {
-              if (confirm('Reload sample Bangladeshi demonstration orders? This will add preset test orders.')) {
-                resetOrdersToSample();
-              }
-            }}
-            className="px-3.5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs border border-neutral-800 flex items-center gap-1.5 transition-colors"
-            title="Reset sample orders for demonstration"
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-4 py-2 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-red-600/20 flex items-center gap-1.5 cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-neutral-400" />
-            <span className="hidden sm:inline">Reset Demo Orders</span>
+            <Plus className="w-4 h-4" />
+            <span>Record Order</span>
           </button>
         </div>
       </div>
@@ -416,13 +423,24 @@ export const OrdersManager: React.FC = () => {
               : 'No orders match your filter criteria or search query.'}
           </p>
           {orders.length === 0 ? (
-            <div className="pt-2">
+            <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
               <button
                 onClick={() => setIsAddModalOpen(true)}
                 className="px-4 py-2 rounded-xl bg-[#e32117] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider shadow-md transition-all inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ Record Manual Order</span>
+              </button>
+              <button
+                disabled={isOrdersSyncing}
+                onClick={async () => {
+                  await refreshOrdersFromDatabase();
+                  showToast('Checked Cloud Firestore database!');
+                }}
+                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${isOrdersSyncing ? 'animate-spin' : ''}`} />
+                <span>Sync with Database</span>
               </button>
             </div>
           ) : (
