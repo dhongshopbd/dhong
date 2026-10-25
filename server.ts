@@ -40,9 +40,9 @@ const config: NotificationConfig = {
   smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
   smtpPort: Number(process.env.SMTP_PORT) || 465,
   smtpSecure: process.env.SMTP_SECURE !== 'false',
-  smtpUser: process.env.SMTP_USER || 'shong.shop.bd@gmail.com',
+  smtpUser: process.env.SMTP_USER || 'dhong.shop.bd@gmail.com',
   smtpPass: process.env.SMTP_PASS || '',
-  fromEmail: process.env.FROM_EMAIL || 'shong.shop.bd@gmail.com',
+  fromEmail: process.env.FROM_EMAIL || 'dhong.shop.bd@gmail.com',
   fromName: process.env.FROM_NAME || 'Dhong Bangladesh (ঢং)',
   webhookUrl: process.env.WEBHOOK_URL || '',
 };

@@ -241,26 +241,54 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       })
       .catch(() => {});
 
-    // 4. Hydrate local orders and invoices
-    idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
-      if (isMounted && Array.isArray(idbOrders)) {
-        const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
-        setOrders(realOrders);
-        if (realOrders.length !== idbOrders.length) {
+    // 4. Hydrate orders and invoices directly from Cloud Firestore (with local offline fallback)
+    fetchOrdersFromFirestore()
+      .then((dbOrders) => {
+        if (isMounted && dbOrders !== null) {
+          const realOrders = dbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
+          setOrders(realOrders);
           persistOrders(realOrders);
+        } else {
+          idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
+            if (isMounted && Array.isArray(idbOrders)) {
+              const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
+              setOrders(realOrders);
+            }
+          });
         }
-      }
-    });
+      })
+      .catch(() => {
+        idbGet<CustomerOrder[]>('dhong_orders_v3').then((idbOrders) => {
+          if (isMounted && Array.isArray(idbOrders)) {
+            const realOrders = idbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
+            setOrders(realOrders);
+          }
+        });
+      });
 
-    idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
-      if (isMounted && Array.isArray(idbInvoices)) {
-        const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
-        setInvoices(realInvoices);
-        if (realInvoices.length !== idbInvoices.length) {
+    fetchInvoicesFromFirestore()
+      .then((dbInvoices) => {
+        if (isMounted && dbInvoices !== null) {
+          const realInvoices = dbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
+          setInvoices(realInvoices);
           persistInvoices(realInvoices);
+        } else {
+          idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
+            if (isMounted && Array.isArray(idbInvoices)) {
+              const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
+              setInvoices(realInvoices);
+            }
+          });
         }
-      }
-    });
+      })
+      .catch(() => {
+        idbGet<Invoice[]>('dhong_invoices_v3').then((idbInvoices) => {
+          if (isMounted && Array.isArray(idbInvoices)) {
+            const realInvoices = idbInvoices.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
+            setInvoices(realInvoices);
+          }
+        });
+      });
 
     // 5. Listen for Firebase Auth state changes
     if (auth) {
@@ -275,12 +303,20 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             try {
               localStorage.setItem(ADMIN_AUTH_KEY, 'true');
             } catch {}
-            // Admin can also fetch protected customer orders and invoices
+            // Admin fetches latest orders and invoices from Firestore
             fetchOrdersFromFirestore().then((dbOrders) => {
-              if (isMounted && dbOrders && dbOrders.length > 0) setOrders(dbOrders);
+              if (isMounted && dbOrders !== null) {
+                const realOrders = dbOrders.filter((o) => !LEGACY_DUMMY_ORDER_IDS.has(o.id));
+                setOrders(realOrders);
+                persistOrders(realOrders);
+              }
             }).catch(() => {});
             fetchInvoicesFromFirestore().then((dbInvs) => {
-              if (isMounted && dbInvs && dbInvs.length > 0) setInvoices(dbInvs);
+              if (isMounted && dbInvs !== null) {
+                const realInvoices = dbInvs.filter((i) => !LEGACY_DUMMY_INVOICE_IDS.has(i.id));
+                setInvoices(realInvoices);
+                persistInvoices(realInvoices);
+              }
             }).catch(() => {});
           }
         } else {
@@ -888,19 +924,22 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       invoiceId: invoice.id,
       invoiceSavedAt: nowIso,
     };
-    const updatedOrders = orders.map((o) => (o.id === orderId ? updatedOrder : o));
-    setOrders(updatedOrders);
-    persistOrders(updatedOrders);
 
-    // Save permanently to Firestore
+    // Upon confirmation, the order is converted into an official Invoice:
+    // 1. Remove from active orders list & persistent local storage
+    const remainingOrders = orders.filter((o) => o.id !== orderId);
+    setOrders(remainingOrders);
+    persistOrders(remainingOrders);
+
+    // 2. Save invoice permanently to Cloud Firestore
     saveInvoiceToFirestore(invoice).catch((err) => {
       console.warn('Firestore invoice save info:', err);
     });
-    updateOrderInFirestore(targetOrder.id, {
-      status: 'Confirmed',
-      invoiceId: invoice.id,
-      invoiceSavedAt: nowIso,
-    }).catch(() => {});
+
+    // 3. Remove order from Cloud Firestore database so it is converted to invoice
+    deleteOrderFromFirestore(targetOrder.id).catch((err) => {
+      console.warn('Firestore order remove info:', err);
+    });
 
     return { order: updatedOrder, invoice };
   };

@@ -145,8 +145,8 @@ export async function testFirestoreConnection(): Promise<boolean> {
 }
 
 // Authorized administrator verification
-export const ADMIN_EMAIL = 'shong.shop.bd@gmail.com';
-export const LEGACY_ADMIN_EMAIL = 'dhong.shop.bd@gmail.com';
+export const ADMIN_EMAIL = 'dhong.shop.bd@gmail.com';
+export const LEGACY_ADMIN_EMAIL = 'shong.shop.bd@gmail.com';
 
 export function isUserAdmin(user: User | null): boolean {
   if (!user) return false;
@@ -387,7 +387,8 @@ export async function saveOrderToFirestore(order: CustomerOrder): Promise<void> 
   if (!db) return;
   const path = `orders/${order.id}`;
   try {
-    await setDoc(doc(db, 'orders', order.id), order);
+    const cleanOrder = JSON.parse(JSON.stringify(order));
+    await setDoc(doc(db, 'orders', order.id), cleanOrder);
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
   }
@@ -403,7 +404,6 @@ export async function fetchOrdersFromFirestore(): Promise<CustomerOrder[] | null
     list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return list;
   } catch (error) {
-    // Non-admin will be denied by security rules (protection of customer PII)
     return null;
   }
 }
@@ -412,7 +412,8 @@ export async function updateOrderInFirestore(orderId: string, updates: Partial<C
   if (!db) return;
   const path = `orders/${orderId}`;
   try {
-    await updateDoc(doc(db, 'orders', orderId), updates);
+    const cleanUpdates = JSON.parse(JSON.stringify(updates));
+    await updateDoc(doc(db, 'orders', orderId), cleanUpdates);
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);
   }
@@ -433,7 +434,8 @@ export async function saveInvoiceToFirestore(invoice: Invoice): Promise<void> {
   if (!db) return;
   const path = `invoices/${invoice.id}`;
   try {
-    await setDoc(doc(db, 'invoices', invoice.id), invoice);
+    const cleanInvoice = JSON.parse(JSON.stringify(invoice));
+    await setDoc(doc(db, 'invoices', invoice.id), cleanInvoice);
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
   }

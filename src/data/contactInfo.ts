@@ -51,8 +51,8 @@ export const CONTACT_INFO: ContactDetails = {
   whatsappNumber: '8801790141399',
   whatsappInternational: '+8801790141399',
   whatsappUrl: 'https://wa.me/8801790141399',
-  email: 'shong.shop.bd@gmail.com',
-  emailAdmin: 'shong.shop.bd@gmail.com',
+  email: 'dhong.shop.bd@gmail.com',
+  emailAdmin: 'dhong.shop.bd@gmail.com',
   workingHours: '10:00 AM - 10:00 PM (Everyday)',
   // Official Google Maps direct search query for Asiatic Shopping Complex, Konapara, Demra
   googleMapsSearchUrl: 'https://www.google.com/maps/search/?api=1&query=Asiatic+Shopping+Complex+Konapara+Al-Amin+Road+Demra+Dhaka+1362',

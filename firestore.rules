@@ -61,13 +61,12 @@ service cloud.firestore {
 
     // Customer Orders
     match /orders/{orderId} {
-      allow create: if isValidId(orderId) && isValidOrder(incoming());
-      allow read, update, delete: if isValidId(orderId);
+      allow read, write, delete: if isValidId(orderId);
     }
 
     // Invoices
     match /invoices/{invoiceId} {
-      allow read, write: if isValidId(invoiceId);
+      allow read, write, delete: if isValidId(invoiceId);
     }
 
     // Admins

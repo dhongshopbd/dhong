@@ -189,7 +189,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
                 High Fashion & Designer Dresses • Bangladesh
               </p>
               <p className="text-[11px] text-neutral-400 mt-0.5">
-                Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Helpline: <a href="tel:01790141399" className="hover:underline text-neutral-600 font-medium">01790141399</a> • <a href="mailto:shong.shop.bd@gmail.com" className="hover:underline text-neutral-600 font-medium">shong.shop.bd@gmail.com</a>
+                Asiatic Shopping Complex, Konapara, Al-Amin Road, Demra, Dhaka-1362 • Helpline: <a href="tel:01790141399" className="hover:underline text-neutral-600 font-medium">01790141399</a> • <a href="mailto:dhong.shop.bd@gmail.com" className="hover:underline text-neutral-600 font-medium">dhong.shop.bd@gmail.com</a>
               </p>
             </div>
 
