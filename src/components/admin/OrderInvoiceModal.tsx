@@ -3,7 +3,9 @@ import { CustomerOrder, Invoice } from '../../types';
 import { formatBDT } from '../../utils/currency';
 import { useStore } from '../../context/StoreContext';
 import { triggerInvoiceNumberNotification } from '../../utils/notifications';
-import { X, Printer, CheckCircle2, Truck, Phone, Mail, MapPin, MessageCircle, Send, Copy, Check, Sparkles } from 'lucide-react';
+import { X, Printer, CheckCircle2, Truck, Phone, Mail, MapPin, MessageCircle, Send, Copy, Check, Sparkles, FileDown, Loader2 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface OrderInvoiceModalProps {
   order?: CustomerOrder;
@@ -15,6 +17,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
   const { getInvoiceByOrderId, markInvoiceSent } = useStore();
   const [copied, setCopied] = useState(false);
   const [sentStatus, setSentStatus] = useState<string | null>(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   // Determine effective invoice and order data
   const invoice = propInvoice || (order ? getInvoiceByOrderId(order.id) : undefined);
@@ -63,7 +66,234 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
   const notif = triggerInvoiceNumberNotification(effectiveInvoice);
 
   const handlePrint = () => {
-    window.print();
+    const invoiceEl = document.getElementById('printable-invoice');
+    if (!invoiceEl) {
+      window.print();
+      return;
+    }
+
+    // Clean up any lingering print iframes
+    const oldFrame = document.getElementById('dhong-isolated-print-frame');
+    if (oldFrame) oldFrame.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'dhong-isolated-print-frame';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    // Clone invoice content and strip UI controls
+    const clone = invoiceEl.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('.print\\:hidden').forEach((el) => el.remove());
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Invoice ${invoiceNumber}</title>
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
+          }
+          * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #ffffff !important;
+            color: #111827 !important;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.35;
+          }
+          .invoice-page {
+            width: 100%;
+            max-width: 190mm;
+            margin: 0 auto;
+            page-break-inside: avoid;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            padding: 5px 8px;
+          }
+          img {
+            max-height: 40px;
+            object-fit: contain;
+          }
+          .flex { display: flex; }
+          .justify-between { justify-content: space-between; }
+          .justify-end { justify-content: flex-end; }
+          .items-start { align-items: flex-start; }
+          .items-center { align-items: center; }
+          .grid { display: grid; }
+          .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .gap-1 { gap: 4px; }
+          .gap-2 { gap: 8px; }
+          .gap-3 { gap: 12px; }
+          .gap-4 { gap: 14px; }
+          .space-y-3 > * + * { margin-top: 10px; }
+          .space-y-4 > * + * { margin-top: 12px; }
+          .space-y-5 > * + * { margin-top: 14px; }
+          .space-y-6 > * + * { margin-top: 16px; }
+          .space-y-1\\.5 > * + * { margin-top: 5px; }
+          .space-y-1 > * + * { margin-top: 3px; }
+          .border-b { border-bottom: 1px solid #e5e7eb; }
+          .border-t { border-top: 1px solid #e5e7eb; }
+          .border { border: 1px solid #e5e7eb; }
+          .border-b-2 { border-bottom: 2px solid #111827; }
+          .border-red-200 { border-color: #fecaca; }
+          .rounded-lg { border-radius: 6px; }
+          .rounded-xl { border-radius: 10px; }
+          .text-right { text-align: right; }
+          .text-center { text-align: center; }
+          .font-bold { font-weight: 700; }
+          .font-semibold { font-weight: 600; }
+          .font-medium { font-weight: 500; }
+          .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+          .text-xs { font-size: 11px; }
+          .text-sm { font-size: 12px; }
+          .text-base { font-size: 14px; }
+          .text-lg { font-size: 16px; }
+          .text-2xl { font-size: 20px; }
+          .text-neutral-950 { color: #030712; }
+          .text-neutral-900 { color: #111827; }
+          .text-neutral-800 { color: #1f2937; }
+          .text-neutral-700 { color: #374151; }
+          .text-neutral-600 { color: #4b5563; }
+          .text-neutral-500 { color: #6b7280; }
+          .text-neutral-400 { color: #9ca3af; }
+          .text-red-600 { color: #dc2626; }
+          .text-red-700 { color: #b91c1c; }
+          .text-red-800 { color: #991b1b; }
+          .text-emerald-700 { color: #047857; }
+          .text-emerald-800 { color: #065f46; }
+          .bg-neutral-50 { background-color: #f9fafb; }
+          .bg-neutral-100 { background-color: #f3f4f6; }
+          .bg-red-50 { background-color: #fef2f2; }
+          .bg-emerald-100 { background-color: #d1fae5; }
+          .bg-white { background-color: #ffffff; }
+          .w-64 { width: 230px; }
+          .w-full { width: 100%; }
+          .py-1 { padding-top: 3px; padding-bottom: 3px; }
+          .py-2 { padding-top: 5px; padding-bottom: 5px; }
+          .py-2\\.5 { padding-top: 6px; padding-bottom: 6px; }
+          .px-2\\.5 { padding-left: 8px; padding-right: 8px; }
+          .px-3 { padding-left: 10px; padding-right: 10px; }
+          .p-3 { padding: 8px 10px; }
+          .p-4 { padding: 10px 12px; }
+          .pb-3 { padding-bottom: 8px; }
+          .pb-4 { padding-bottom: 10px; }
+          .pb-5 { padding-bottom: 12px; }
+          .pt-3 { padding-top: 8px; }
+          .pt-4 { padding-top: 10px; }
+          .uppercase { text-transform: uppercase; }
+          .tracking-wider { letter-spacing: 0.05em; }
+          .tracking-widest { letter-spacing: 0.08em; }
+          .inline-flex { display: inline-flex; }
+          .no-print, .print\\:hidden { display: none !important; }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-page">
+          ${clone.innerHTML}
+        </div>
+      </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error('Print iframe error:', err);
+        window.print();
+      } finally {
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            iframe.remove();
+          }
+        }, 1500);
+      }
+    }, 250);
+  };
+
+  const handleExportPDF = async () => {
+    const invoiceEl = document.getElementById('printable-invoice');
+    if (!invoiceEl) return;
+
+    setIsExportingPDF(true);
+    try {
+      const hiddenEls = invoiceEl.querySelectorAll('.print\\:hidden');
+      hiddenEls.forEach((el) => ((el as HTMLElement).style.display = 'none'));
+
+      const canvas = await html2canvas(invoiceEl, {
+        scale: 2.5,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      hiddenEls.forEach((el) => ((el as HTMLElement).style.display = ''));
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 8;
+      const printWidth = pageWidth - margin * 2;
+      const printHeight = (canvas.height * printWidth) / canvas.width;
+
+      if (printHeight <= pageHeight - margin * 2) {
+        pdf.addImage(imgData, 'JPEG', margin, margin, printWidth, printHeight);
+      } else {
+        let heightLeft = printHeight;
+        let position = margin;
+        pdf.addImage(imgData, 'JPEG', margin, position, printWidth, printHeight);
+        heightLeft -= (pageHeight - margin * 2);
+
+        while (heightLeft > 0) {
+          position = position - (pageHeight - margin * 2);
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', margin, position, printWidth, printHeight);
+          heightLeft -= (pageHeight - margin * 2);
+        }
+      }
+
+      pdf.save(`Dhong_Invoice_${invoiceNumber}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('PDF generation could not complete. Please use Print Invoice -> Save as PDF.');
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   const handleCopyInvoiceNumber = () => {
@@ -132,12 +362,33 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
               </button>
             )}
 
+            {/* Convert to PDF Button */}
+            <button
+              id="top-pdf-invoice-btn"
+              onClick={handleExportPDF}
+              disabled={isExportingPDF}
+              className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="Download official invoice as A4 PDF document"
+            >
+              {isExportingPDF ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Converting...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-3.5 h-3.5" />
+                  <span>Convert to PDF</span>
+                </>
+              )}
+            </button>
+
             {/* Print Action */}
             <button
               id="top-print-invoice-btn"
               onClick={handlePrint}
-              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-              title="Print official invoice or save as PDF"
+              className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-100 text-neutral-900 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer border border-neutral-300"
+              title="Print official invoice (A4 1-Page)"
             >
               <Printer className="w-3.5 h-3.5 text-red-600" />
               <span>Print Invoice</span>
@@ -164,7 +415,7 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
         )}
 
         {/* Printable Invoice Body */}
-        <div id="printable-invoice" className="p-6 sm:p-8 space-y-6 print:p-8 bg-white">
+        <div id="printable-invoice" className="p-5 sm:p-6 space-y-4 print:p-6 bg-white max-w-[210mm] mx-auto text-neutral-900">
           
           {/* Header */}
           <div className="flex justify-between items-start border-b border-neutral-200 pb-5">
@@ -351,10 +602,30 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
+              id="bottom-pdf-invoice-btn"
+              onClick={handleExportPDF}
+              disabled={isExportingPDF}
+              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              title="Download official invoice as A4 PDF document"
+            >
+              {isExportingPDF ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Converting PDF...</span>
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4" />
+                  <span>Convert to PDF</span>
+                </>
+              )}
+            </button>
+
+            <button
               id="bottom-print-invoice-btn"
               onClick={handlePrint}
               className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-black text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all cursor-pointer"
-              title="Print official invoice or save as PDF"
+              title="Print official invoice (A4 1-Page)"
             >
               <Printer className="w-4 h-4 text-red-400" />
               <span>Print Invoice</span>

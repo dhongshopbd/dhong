@@ -49,41 +49,43 @@ body {
 /* Print styles for Clean A4 / PDF Invoice */
 @media print {
   @page {
-    size: auto;
-    margin: 12mm;
+    size: A4 portrait;
+    margin: 8mm 10mm;
   }
 
-  body {
+  html, body {
     background: #ffffff !important;
     color: #111827 !important;
+    overflow: visible !important;
+    height: auto !important;
   }
 
-  /* Hide background application UI */
-  body * {
-    visibility: hidden;
+  /* Reset fixed modal overlay to static during native print */
+  .fixed.inset-0 {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
-  /* Show only printable invoice */
-  #printable-invoice,
-  #printable-invoice * {
-    visibility: visible;
+  .print\:hidden {
+    display: none !important;
   }
 
   #printable-invoice {
-    position: absolute;
-    left: 0;
-    top: 0;
+    display: block !important;
+    visibility: visible !important;
     width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #111827 !important;
     box-shadow: none !important;
     border: none !important;
-  }
-
-  .print\:hidden {
-    display: none !important;
+    page-break-inside: avoid !important;
   }
 }
