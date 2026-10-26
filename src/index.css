@@ -15,20 +15,46 @@ body {
   font-family: var(--font-serif);
 }
 
-/* Custom subtle scrollbar */
+/* Cross-browser Brand Red Scrollbar (Firefox, Chrome, Safari, Edge, Opera) */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #e32117 rgba(227, 33, 23, 0.08);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #e32117 rgba(227, 33, 23, 0.08);
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(227, 33, 23, 0.05);
+  border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background-color: #e32117;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background-color: #b91c1c;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #991b1b;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 @keyframes fadeIn {
