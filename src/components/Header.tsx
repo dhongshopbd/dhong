@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
-import { Search, ShoppingBag, X, ChevronDown, ChevronRight, Layers, Sparkles, Check, Tag, ArrowRight, MapPin, Phone } from 'lucide-react';
+import { Search, ShoppingBag, X, ChevronDown, Layers, Sparkles, Check, Tag, MapPin, Phone } from 'lucide-react';
 import { CATEGORY_HIERARCHY } from '../data/categoryHierarchy';
 import { CONTACT_INFO } from '../data/contactInfo';
 
@@ -18,22 +18,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
     resetFilters,
     categories,
     selectCategoryOnly,
-    selectCategoryWithTag,
     products
   } = useStore();
 
   const [localSearch, setLocalSearch] = useState(filters.searchQuery);
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const moreRef = useRef<HTMLDivElement>(null);
   const catTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const moreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
 
-  // Hover handlers for "Dress Categories" dropdown: opens on cursor hover with zero click needed
+  // Hover handlers for "Dress Categories" dropdown: opens on cursor hover
   const handleCatMouseEnter = () => {
     if (catTimerRef.current) {
       clearTimeout(catTimerRef.current);
@@ -48,44 +43,20 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
     }
     catTimerRef.current = setTimeout(() => {
       setIsCatDropdownOpen(false);
-      setHoveredCategory(null);
     }, 280);
   };
 
-  // Hover handlers for "+ More Categories" dropdown
-  const handleMoreMouseEnter = () => {
-    if (moreTimerRef.current) {
-      clearTimeout(moreTimerRef.current);
-      moreTimerRef.current = null;
-    }
-    setIsMoreOpen(true);
-  };
-
-  const handleMoreMouseLeave = () => {
-    if (moreTimerRef.current) {
-      clearTimeout(moreTimerRef.current);
-    }
-    moreTimerRef.current = setTimeout(() => {
-      setIsMoreOpen(false);
-    }, 220);
-  };
-
-  // Close dropdowns when clicking outside and cleanup timers
+  // Close dropdown when clicking outside and cleanup timers
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsCatDropdownOpen(false);
-        setHoveredCategory(null);
-      }
-      if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
-        setIsMoreOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       if (catTimerRef.current) clearTimeout(catTimerRef.current);
-      if (moreTimerRef.current) clearTimeout(moreTimerRef.current);
     };
   }, []);
 
@@ -145,8 +116,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
   const handleSelectCategory = (cat: string) => {
     selectCategoryOnly(cat);
     setIsCatDropdownOpen(false);
-    setHoveredCategory(null);
-    setIsMoreOpen(false);
 
     // Scroll to dresses collection if not in view
     const mainSection = document.querySelector('main');
@@ -154,24 +123,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
       mainSection.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-  // Handle subcategory selection with specific tag
-  const handleSelectSubcategory = (cat: string, tag?: string) => {
-    selectCategoryWithTag(cat, tag);
-    setIsCatDropdownOpen(false);
-    setHoveredCategory(null);
-    setIsMoreOpen(false);
-
-    // Scroll to dresses collection if not in view
-    const mainSection = document.querySelector('main');
-    if (mainSection) {
-      mainSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  // Categories partition: show first 5 directly as tabs, others in "+ More"
-  const primaryTabs = categories.slice(0, 5);
-  const overflowTabs = categories.slice(5);
 
   // Helper to count dresses per category
   const getDressCount = (cat: string) => {
@@ -179,8 +130,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
   };
 
   const isAllSelected = filters.selectedCategories.length === 0;
-  const activeHierarchy = hoveredCategory ? CATEGORY_HIERARCHY[hoveredCategory] : null;
-  const hasSubcategories = Boolean(activeHierarchy?.subcategories && activeHierarchy.subcategories.length > 0);
 
   return (
     <header className="sticky top-0 z-40 bg-neutral-950/95 backdrop-blur-md border-b border-neutral-800/80 shadow-lg">
@@ -332,16 +281,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isCatDropdownOpen ? 'rotate-180 text-white' : 'text-neutral-400'}`} />
             </button>
 
-            {/* Categories Mega Dropdown Menu - Drops down on hover */}
+            {/* Categories Dropdown Menu - Drops straight down */}
             {isCatDropdownOpen && (
               <div 
                 id="header-categories-dropdown-menu"
                 onMouseEnter={handleCatMouseEnter}
                 onMouseLeave={handleCatMouseLeave}
-                className="absolute left-0 top-full pt-1.5 z-50 animate-fadeIn flex items-start gap-2 select-none"
+                className="absolute left-0 top-full pt-1.5 z-50 animate-fadeIn select-none"
               >
-                {/* Left Column: All Dress Categories */}
-                <div className="w-72 sm:w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-2.5 backdrop-blur-xl border-t-2 border-t-red-600 shrink-0">
+                <div className="w-72 sm:w-80 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-2.5 backdrop-blur-xl border-t-2 border-t-red-600">
                   <div className="px-3 py-2 border-b border-neutral-800 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-neutral-400">
                     <span className="flex items-center gap-1.5 text-red-400">
                       <Sparkles className="w-3.5 h-3.5" />
@@ -356,7 +304,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
                     {/* All Dresses option */}
                     <button
                       type="button"
-                      onMouseEnter={() => setHoveredCategory(null)}
                       onClick={() => handleSelectCategory('All')}
                       className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-colors cursor-pointer ${
                         isAllSelected
@@ -373,30 +320,19 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
                       </span>
                     </button>
 
-                    {/* Dynamic categories (Automatically updates whenever a category is added!) */}
+                    {/* Dynamic categories - Pure Clean Dropdown List */}
                     {categories.map((cat) => {
                       const isSelected = filters.selectedCategories.includes(cat);
-                      const isHovered = hoveredCategory === cat;
                       const count = getDressCount(cat);
                       const hierarchy = CATEGORY_HIERARCHY[cat];
-                      const hasSubs = Boolean(hierarchy?.subcategories && hierarchy.subcategories.length > 0);
 
                       return (
                         <button
                           key={cat}
                           type="button"
-                          onMouseEnter={() => {
-                            if (hasSubs) {
-                              setHoveredCategory(cat);
-                            } else {
-                              setHoveredCategory(null);
-                            }
-                          }}
                           onClick={() => handleSelectCategory(cat)}
                           className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
-                            isHovered
-                              ? 'bg-neutral-800 text-white font-medium border border-neutral-700 shadow-xs'
-                              : isSelected
+                            isSelected
                               ? 'bg-red-600/15 text-red-300 font-semibold border border-red-500/30'
                               : 'text-neutral-300 hover:bg-neutral-800/80 hover:text-white border border-transparent'
                           }`}
@@ -405,7 +341,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
                             {isSelected ? (
                               <Check className="w-3.5 h-3.5 text-red-500 shrink-0" />
                             ) : (
-                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${isHovered ? 'bg-red-500 ring-2 ring-red-500/30' : 'bg-neutral-600'}`}></span>
+                              <span className="w-1.5 h-1.5 rounded-full shrink-0 bg-neutral-600"></span>
                             )}
                             <div className="flex flex-col min-w-0">
                               <span className="line-clamp-1">{cat}</span>
@@ -420,9 +356,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
                             <span className="text-[10px] font-mono text-neutral-400 bg-neutral-950 px-2 py-0.5 rounded-full">
                               {count}
                             </span>
-                            {hasSubs && (
-                              <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-150 ${isHovered ? 'text-red-400 translate-x-0.5' : 'text-neutral-500'}`} />
-                            )}
                           </div>
                         </button>
                       );
@@ -430,87 +363,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
                   </div>
 
                   <div className="pt-2 mt-1 border-t border-neutral-800 px-2 flex items-center justify-between text-[11px] text-neutral-400">
-                    <span>Hover category to expand styles</span>
+                    <span>Click any category to filter</span>
                     <span className="text-red-400/80 font-medium">Dhong BD</span>
                   </div>
                 </div>
-
-                {/* Right Slide-Out Flyout Panel: Shows Subcategories & Cuts ONLY if hoveredCategory has more */}
-                {hoveredCategory && activeHierarchy && hasSubcategories && (
-                  <div 
-                    id="header-subcategories-flyout"
-                    onMouseEnter={handleCatMouseEnter}
-                    onMouseLeave={handleCatMouseLeave}
-                    className="w-72 sm:w-84 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-3 backdrop-blur-xl border-t-2 border-t-red-500 animate-fadeIn shrink-0"
-                  >
-                    {/* Category Title & Bengali Name */}
-                    <div className="pb-2.5 mb-2 border-b border-neutral-800">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                          <span>{activeHierarchy.name}</span>
-                        </h4>
-                        <span className="text-[10px] text-neutral-400 font-normal">
-                          {activeHierarchy.nameBn}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-neutral-400 mt-1 leading-relaxed">
-                        {activeHierarchy.description}
-                      </p>
-                    </div>
-
-                    {/* Subcategories List */}
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5 px-1 flex items-center justify-between">
-                      <span>Subcategories & Cuts</span>
-                      <span className="text-red-400 font-mono text-[10px]">
-                        {activeHierarchy.subcategories?.length} styles
-                      </span>
-                    </div>
-
-                    <div className="space-y-1 max-h-64 overflow-y-auto pr-0.5">
-                      {activeHierarchy.subcategories?.map((sub) => (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          onClick={() => handleSelectSubcategory(hoveredCategory!, sub.tag)}
-                          className="w-full text-left p-2 rounded-xl text-xs hover:bg-neutral-800/90 group transition-all border border-transparent hover:border-neutral-700/60 flex items-start justify-between gap-2 cursor-pointer"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 font-medium text-neutral-200 group-hover:text-red-400 transition-colors">
-                              <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 group-hover:bg-red-500 transition-colors shrink-0"></span>
-                              <span className="line-clamp-1">{sub.name}</span>
-                              {sub.nameBn && (
-                                <span className="text-[10px] text-neutral-400 font-normal">({sub.nameBn})</span>
-                              )}
-                            </div>
-                            {sub.description && (
-                              <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 mt-0.5 line-clamp-1 pl-3">
-                                {sub.description}
-                              </p>
-                            )}
-                          </div>
-                          {sub.tag && (
-                            <span className="shrink-0 text-[10px] font-mono bg-neutral-950 group-hover:bg-red-950/60 text-neutral-400 group-hover:text-red-300 border border-neutral-800 group-hover:border-red-800/50 px-2 py-0.5 rounded-md transition-colors">
-                              #{sub.tag}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Bottom Action: View all in this category */}
-                    <div className="pt-2 mt-2 border-t border-neutral-800">
-                      <button
-                        type="button"
-                        onClick={() => handleSelectCategory(hoveredCategory!)}
-                        className="w-full py-1.5 px-3 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 text-xs font-semibold flex items-center justify-center gap-1.5 border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
-                      >
-                        <span>View All {hoveredCategory} ({getDressCount(hoveredCategory!)})</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -518,9 +374,9 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
           {/* Separator */}
           <div className="h-4 w-px bg-neutral-800 mx-0.5 shrink-0 hidden sm:block"></div>
 
-          {/* Quick Category Tabs in scrollable container */}
+          {/* Quick Category Tabs in scrollable container - ALL CATEGORIES, NO "+ MORE" DROPDOWN */}
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5 min-w-0 flex-1">
-            {/* 2. "All Dresses" Tab */}
+            {/* All Dresses Tab */}
             <button
               id="header-tab-all"
               type="button"
@@ -534,8 +390,8 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
               All Dresses
             </button>
 
-            {/* 3. Primary Category Tabs (Dynamic) */}
-            {primaryTabs.map((cat) => {
+            {/* Direct Category Tabs */}
+            {categories.map((cat) => {
               const isSelected = filters.selectedCategories.includes(cat);
               const count = getDressCount(cat);
               return (
@@ -559,69 +415,6 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
                 </button>
               );
             })}
-
-            {/* 4. "+ More Categories" Dropdown Tab */}
-            {overflowTabs.length > 0 && (
-              <div 
-                className="relative shrink-0 group" 
-                ref={moreRef}
-                onMouseEnter={handleMoreMouseEnter}
-                onMouseLeave={handleMoreMouseLeave}
-              >
-                <button
-                  id="header-more-categories-btn"
-                  type="button"
-                  onClick={() => setIsMoreOpen(!isMoreOpen)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium tracking-wide shrink-0 transition-all flex items-center gap-1 border border-transparent cursor-pointer ${
-                    isMoreOpen || overflowTabs.some((c) => filters.selectedCategories.includes(c))
-                      ? 'bg-neutral-850 text-red-400 border-neutral-700 font-semibold'
-                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
-                  }`}
-                  title="Hover cursor to view remaining dress categories"
-                >
-                  <span>+{overflowTabs.length} More</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isMoreOpen && (
-                  <div 
-                    onMouseEnter={handleMoreMouseEnter}
-                    onMouseLeave={handleMoreMouseLeave}
-                    className="absolute left-0 top-full pt-1.5 w-64 z-50 animate-fadeIn"
-                  >
-                    <div className="bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-2 border-t-2 border-t-red-600">
-                      <div className="px-3 py-1.5 border-b border-neutral-800 text-[10px] uppercase font-bold text-neutral-400 tracking-wider flex items-center justify-between">
-                        <span>More Categories</span>
-                        <span className="text-red-400 font-mono">{overflowTabs.length}</span>
-                      </div>
-                      <div className="py-1 max-h-60 overflow-y-auto space-y-1">
-                        {overflowTabs.map((cat) => {
-                          const isSelected = filters.selectedCategories.includes(cat);
-                          const count = getDressCount(cat);
-                          return (
-                            <button
-                              key={cat}
-                              type="button"
-                              onClick={() => handleSelectCategory(cat)}
-                              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                                isSelected
-                                  ? 'bg-red-600/15 text-red-300 font-semibold'
-                                  : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
-                              }`}
-                            >
-                              <span className="line-clamp-1">{cat}</span>
-                              <span className="text-[10px] font-mono text-neutral-400">
-                                ({count})
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
         </div>
