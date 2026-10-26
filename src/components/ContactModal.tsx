@@ -38,12 +38,12 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, ini
 
           <div className="flex items-center gap-3 mb-2">
             <img
-              src="/dhong-logo.png"
+              src="/assets/aistudio/dhong-logo_ce533da6.jpeg"
               onError={(e) => {
-                e.currentTarget.src = 'https://i.ibb.co.com/zVVGNSpd/bg.png';
+                e.currentTarget.src = '/dhong-logo.png';
               }}
               alt="Dhong Brand Logo"
-              className="h-10 w-auto object-contain"
+              className="h-10 w-auto object-contain rounded-md"
             />
             <div>
               <h3 className="font-brand text-2xl font-bold tracking-wider text-white">DHONG</h3>

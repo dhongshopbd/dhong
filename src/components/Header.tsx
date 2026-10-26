@@ -220,12 +220,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenContact }) => {
             className="cursor-pointer group flex items-center gap-2.5 sm:gap-3.5 select-none shrink-0"
           >
             <img
-              src="/dhong-logo.png"
+              src="/assets/aistudio/dhong-logo_ce533da6.jpeg"
               onError={(e) => {
-                e.currentTarget.src = 'https://i.ibb.co.com/zVVGNSpd/bg.png';
+                e.currentTarget.src = '/dhong-logo.png';
               }}
               alt="Dhong Brand Logo"
-              className="h-10 sm:h-12 w-auto object-contain drop-shadow-[0_2px_8px_rgba(227,33,23,0.35)] transition-transform duration-200 group-hover:scale-105"
+              className="h-11 sm:h-13 w-auto object-contain rounded-lg drop-shadow-[0_2px_8px_rgba(227,33,23,0.35)] transition-transform duration-200 group-hover:scale-105"
             />
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-1">

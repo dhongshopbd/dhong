@@ -422,9 +422,12 @@ export const OrderInvoiceModal: React.FC<OrderInvoiceModalProps> = ({ order, inv
             <div>
               <div className="flex items-center gap-2.5">
                 <img
-                  src="https://i.ibb.co.com/zVVGNSpd/bg.png"
+                  src="/assets/aistudio/dhong-logo_ce533da6.jpeg"
+                  onError={(e) => {
+                    e.currentTarget.src = '/dhong-logo.png';
+                  }}
                   alt="Dhong"
-                  className="h-10 w-auto object-contain"
+                  className="h-11 w-auto object-contain rounded-md"
                 />
                 <div>
                   <div className="flex items-center gap-1">

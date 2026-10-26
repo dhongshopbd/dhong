@@ -260,12 +260,12 @@ export const AdminPanel: React.FC = () => {
             
             <div className="flex items-center gap-3">
               <img
-                src="/dhong-logo.png"
+                src="/assets/aistudio/dhong-logo_ce533da6.jpeg"
                 onError={(e) => {
-                  e.currentTarget.src = 'https://i.ibb.co.com/zVVGNSpd/bg.png';
+                  e.currentTarget.src = '/dhong-logo.png';
                 }}
                 alt="Dhong Logo"
-                className="h-10 w-auto object-contain brightness-110"
+                className="h-10 w-auto object-contain rounded-md"
               />
               <div>
                 <div className="flex items-center gap-2">

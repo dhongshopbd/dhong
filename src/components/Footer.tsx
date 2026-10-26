@@ -75,9 +75,12 @@ export const Footer: React.FC<FooterProps> = ({ onOpenContact }) => {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src="https://i.ibb.co.com/zVVGNSpd/bg.png"
+                src="/assets/aistudio/dhong-logo_ce533da6.jpeg"
+                onError={(e) => {
+                  e.currentTarget.src = '/dhong-logo.png';
+                }}
                 alt="Dhong Logo"
-                className="h-10 w-auto object-contain brightness-110"
+                className="h-11 w-auto object-contain rounded-md"
               />
               <div className="flex flex-col">
                 <span className="font-brand text-xl font-bold tracking-widest text-neutral-100 leading-none">

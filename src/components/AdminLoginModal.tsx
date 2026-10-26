@@ -52,9 +52,12 @@ export const AdminLoginModal: React.FC = () => {
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <img
-              src="https://i.ibb.co.com/zVVGNSpd/bg.png"
+              src="/assets/aistudio/dhong-logo_ce533da6.jpeg"
+              onError={(e) => {
+                e.currentTarget.src = '/dhong-logo.png';
+              }}
               alt="Dhong Logo"
-              className="h-16 w-auto object-contain brightness-110 drop-shadow-md"
+              className="h-16 w-auto object-contain rounded-xl drop-shadow-md"
             />
           </div>
           <h1 className="font-brand text-2xl font-bold tracking-wider text-neutral-100 mb-1">
